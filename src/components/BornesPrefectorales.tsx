@@ -82,15 +82,6 @@ export function BornesPrefectorales() {
         département : référez-vous à l'<strong>arrêté préfectoral</strong> de
         votre département.
       </p>
-      <p className="info" style={{ marginBottom: "1.25rem" }}>
-        Repérer l'arrêté en vigueur dans les publications de la Préfecture, de
-        la DDT(M) ou de la DRAAF n'est pas toujours simple pour un propriétaire
-        qui ne les consulte pas régulièrement. Les liens ci-dessous mènent
-        directement vers la recherche officielle ; en cas de doute, votre{" "}
-        <strong>chambre d'agriculture</strong> ou la{" "}
-        <strong>FNPPR</strong> peuvent vous aider à identifier le bon texte.
-      </p>
-
       {/* Sélection du département + catégorie */}
       <div className="grille" style={{ marginBottom: "0.5rem" }}>
         <div className="champ">
