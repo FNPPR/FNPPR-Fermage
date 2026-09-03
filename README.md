@@ -15,8 +15,25 @@ hébergé sur n'importe quel hébergement statique (GitHub Pages, Netlify…).
    département, pour une surface donnée. Des **barèmes pré-remplis** par
    département sont proposés (voir ci-dessous), avec saisie manuelle possible.
 3. **Conversion en denrées** — convertit un ancien bail exprimé en denrées
-   (quintaux de blé, hectolitres de vin…) en montant annuel en euros.
+   (quintaux de blé, hectolitres de vin…) en montant annuel en euros. Le
+   fermage en denrées ayant été supprimé pour la généralité des baux en 1994,
+   cet outil reste surtout utile pour les baux viticoles.
 4. **Tableau des indices** — l'indice national des fermages de 2009 à 2025.
+5. **Taxe foncière** — répartit entre preneur et bailleur la TFNB (parts
+   communale et intercommunale, avec le dégrèvement 2025), les frais de
+   chambre d'agriculture, la taxe GEMAPI, la taxe de remembrement et les
+   taxes syndicales / de marais. Trois méthodes de calcul de l'assiette sont
+   proposées ligne par ligne :
+   - **montant global de l'avis + % de surface** — approximation simple pour
+     un exploitant unique ;
+   - **revenu cadastral propre à l'exploitant** — méthode recommandée dès
+     qu'un même avis d'imposition est partagé entre plusieurs exploitants,
+     car une répartition au seul prorata de surface peut s'écarter
+     sensiblement des revenus cadastraux réels de chacun. Un petit outil
+     intégré aide à actualiser un revenu cadastral ancien selon le taux
+     d'évolution des bases ;
+   - **taux à l'hectare × surface louée** — pour les taxes assises
+     directement sur la surface (remembrement, taxes syndicales / de marais).
 
 ## L'indice national des fermages
 

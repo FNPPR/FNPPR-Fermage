@@ -34,6 +34,12 @@ export function DenreesConverter() {
         préfectoral. Ce montant peut ensuite être réévalué via l'indice national
         (onglet « Réévaluation »).
       </p>
+      <p className="info" style={{ marginBottom: "1.25rem" }}>
+        ℹ️ Le fermage en denrées a été supprimé pour la généralité des baux en
+        1994 : cet outil ne conserve un réel intérêt que pour les{" "}
+        <strong>baux viticoles</strong> dont la clause de paiement en nature
+        (hectolitres de vin) subsiste encore.
+      </p>
 
       <div className="grille">
         <div className="champ">
