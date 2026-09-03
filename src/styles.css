@@ -14,7 +14,7 @@
   --rayon: 10px;
   --ombre: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.05);
   --max-largeur: 920px;
-  --max-large: 1180px;
+  --max-large: 1320px;
 }
 
 * {
@@ -186,7 +186,7 @@ main {
   color: var(--gris-doux);
   font-size: 0.95rem;
   font-weight: 600;
-  padding: 0.7rem 0.9rem;
+  padding: 0.85rem 1.1rem;
   border-radius: 7px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
