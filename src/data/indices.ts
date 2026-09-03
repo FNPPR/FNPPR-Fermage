@@ -13,6 +13,8 @@
  * l'indice de l'année et celui de l'année précédente.
  *
  * Sources :
+ *  - Arrêté du 11 août 2026 (indice 2026 = 127,04 ; +3,23 %)
+ *    NOR : AGRT2618753A — JORF du 13 août 2026
  *  - Arrêté du 23 juillet 2025 (indice 2025 = 123,06 ; +0,42 %)
  *    https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051987943
  *  - Arrêté du 17 juillet 2024 (indice 2024 = 122,55 ; +5,23 %)
@@ -33,7 +35,7 @@ export interface IndiceFermage {
 
 /**
  * Tableau officiel de l'indice national des fermages, trié par année croissante.
- * Mis à jour jusqu'à l'arrêté de 2025.
+ * Mis à jour jusqu'à l'arrêté de 2026.
  */
 export const INDICES_FERMAGE: readonly IndiceFermage[] = [
   { annee: 2009, valeur: 100.0, variation: null },
@@ -53,6 +55,7 @@ export const INDICES_FERMAGE: readonly IndiceFermage[] = [
   { annee: 2023, valeur: 116.46, variation: 5.63 },
   { annee: 2024, valeur: 122.55, variation: 5.23 },
   { annee: 2025, valeur: 123.06, variation: 0.42 },
+  { annee: 2026, valeur: 127.04, variation: 3.23 },
 ] as const;
 
 /** Année la plus ancienne disposant d'un indice national. */

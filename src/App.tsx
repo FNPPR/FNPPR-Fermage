@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { IndexationCalculator } from "./components/IndexationCalculator";
 import { BornesPrefectorales } from "./components/BornesPrefectorales";
-import { DenreesConverter } from "./components/DenreesConverter";
 import { TaxeFonciere } from "./components/TaxeFonciere";
 import { IndicesTable } from "./components/IndicesTable";
 import { RevueAd } from "./components/RevueAd";
@@ -16,13 +15,12 @@ const FNPPR = {
   youtube: "https://www.youtube.com/channel/UCFz3OZlSKkXUpyieafRTqDg",
 };
 
-type Onglet = "indexation" | "bornes" | "taxe" | "denrees" | "indices";
+type Onglet = "indexation" | "bornes" | "taxe" | "indices";
 
 const ONGLETS: { id: Onglet; libelle: string }[] = [
   { id: "indexation", libelle: "Réévaluation" },
   { id: "bornes", libelle: "Minimas et Maximas" },
-  { id: "taxe", libelle: "Taxe foncière" },
-  { id: "denrees", libelle: "Conversion denrées" },
+  { id: "taxe", libelle: "Répartition des taxes foncières et assimilées" },
   { id: "indices", libelle: "Tableau des indices" },
 ];
 
@@ -42,7 +40,8 @@ export function App() {
             <h1>Calculateur de fermage</h1>
             <p>
               Pour les propriétaires ruraux — réévaluation selon l'indice
-              national, minimas et maximas et conversion des baux en denrées.
+              national, minimas et maximas et répartition des taxes foncières
+              et assimilées.
             </p>
           </div>
         </div>
@@ -69,7 +68,6 @@ export function App() {
             {onglet === "indexation" && <IndexationCalculator />}
             {onglet === "bornes" && <BornesPrefectorales />}
             {onglet === "taxe" && <TaxeFonciere />}
-            {onglet === "denrees" && <DenreesConverter />}
             {onglet === "indices" && <IndicesTable />}
           </div>
         </div>
@@ -118,10 +116,10 @@ export function App() {
         </p>
         <ul>
           <li>
-            Arrêté du 23 juillet 2025 constatant l'indice national des fermages
-            2025 —{" "}
+            Arrêté du 11 août 2026 constatant l'indice national des fermages
+            2026 —{" "}
             <a
-              href="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051987943"
+              href="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054673171"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -129,10 +127,10 @@ export function App() {
             </a>
           </li>
           <li>
-            Arrêté du 17 juillet 2024 constatant l'indice national des fermages
-            2024 —{" "}
+            Arrêté du 23 juillet 2025 constatant l'indice national des fermages
+            2025 —{" "}
             <a
-              href="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000050058521"
+              href="https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051987943"
               target="_blank"
               rel="noopener noreferrer"
             >

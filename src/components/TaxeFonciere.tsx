@@ -331,7 +331,7 @@ export function TaxeFonciere() {
 
   return (
     <section className="card" aria-labelledby="titre-taxe">
-      <h2 id="titre-taxe">Répartition de la taxe foncière (preneur / bailleur)</h2>
+      <h2 id="titre-taxe">Répartition des taxes foncières et assimilées</h2>
       <p className="intro">
         La taxe foncière est payée par le <strong>bailleur</strong>, mais le bail
         peut prévoir que le <strong>preneur</strong> en rembourse une part.
