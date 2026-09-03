@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Calculateur de fermage pour les propriétaires ruraux (indice national des fermages, bornes préfectorales, conversion en denrées).",
+  "description": "Calculateur de fermage pour les propriétaires ruraux (indice national des fermages, bornes préfectorales, répartition des taxes foncières et assimilées).",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

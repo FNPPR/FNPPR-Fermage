@@ -14,12 +14,8 @@ hébergé sur n'importe quel hébergement statique (GitHub Pages, Netlify…).
    (minimum / maximum par hectare) fixée par l'arrêté préfectoral du
    département, pour une surface donnée. Des **barèmes pré-remplis** par
    département sont proposés (voir ci-dessous), avec saisie manuelle possible.
-3. **Conversion en denrées** — convertit un ancien bail exprimé en denrées
-   (quintaux de blé, hectolitres de vin…) en montant annuel en euros. Le
-   fermage en denrées ayant été supprimé pour la généralité des baux en 1994,
-   cet outil reste surtout utile pour les baux viticoles.
-4. **Tableau des indices** — l'indice national des fermages de 2009 à 2025.
-5. **Taxe foncière** — répartit entre preneur et bailleur la TFNB (parts
+3. **Tableau des indices** — l'indice national des fermages de 2009 à 2026.
+4. **Répartition des taxes foncières et assimilées** — répartit entre preneur et bailleur la TFNB (parts
    communale et intercommunale, avec le dégrèvement 2025), les frais de
    chambre d'agriculture, la taxe GEMAPI, la taxe de remembrement et les
    taxes syndicales / de marais. Trois méthodes de calcul de l'assiette sont
@@ -49,8 +45,8 @@ juillet), ajoutez une ligne au tableau `INDICES_FERMAGE`.
 
 Sources :
 
+- [Arrêté du 11 août 2026](https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054673171) — indice 2026 = 127,04 (+3,23 %)
 - [Arrêté du 23 juillet 2025](https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000051987943) — indice 2025 = 123,06 (+0,42 %)
-- [Arrêté du 17 juillet 2024](https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000050058521) — indice 2024 = 122,55 (+5,23 %)
 
 ## Barèmes préfectoraux
 
@@ -107,7 +103,7 @@ npm run preview    # prévisualiser le build de production
 ```
 src/
   data/indices.ts          Valeurs officielles de l'indice national des fermages
-  lib/fermage.ts           Fonctions de calcul pures (réévaluation, bornes, denrées)
+  lib/fermage.ts           Fonctions de calcul pures (réévaluation, bornes)
   lib/fermage.test.ts      Tests unitaires (Vitest)
   lib/format.ts            Formatage € / % / nombres (fr-FR)
   components/              Composants de l'interface (un par module de calcul)

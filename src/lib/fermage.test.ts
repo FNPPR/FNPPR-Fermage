@@ -4,7 +4,6 @@ import {
   revaloriserFermage,
   historiqueRevalorisation,
   controleBornesPrefectorales,
-  convertirDenrees,
 } from "./fermage";
 import { INDICES_FERMAGE } from "../data/indices";
 
@@ -127,23 +126,5 @@ describe("controleBornesPrefectorales", () => {
 
   it("rejette un minimum supérieur au maximum", () => {
     expect(() => controleBornesPrefectorales(10, 300, 200, 1000)).toThrow();
-  });
-});
-
-describe("convertirDenrees", () => {
-  it("multiplie la quantité par le prix unitaire", () => {
-    const r = convertirDenrees(50, 18.5, "Quintal de blé fermage");
-    expect(r.montant).toBe(925);
-    expect(r.uniteLibelle).toBe("Quintal de blé fermage");
-  });
-
-  it("arrondit le montant à 2 décimales", () => {
-    const r = convertirDenrees(33, 12.333);
-    expect(r.montant).toBe(arrondir(33 * 12.333, 2));
-  });
-
-  it("rejette une quantité ou un prix négatif", () => {
-    expect(() => convertirDenrees(-1, 10)).toThrow();
-    expect(() => convertirDenrees(10, -1)).toThrow();
   });
 });
