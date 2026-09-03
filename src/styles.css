@@ -37,7 +37,7 @@ body {
 .app-header {
   background: linear-gradient(135deg, var(--bleu-fonce), var(--bleu));
   color: var(--blanc);
-  padding: 2.75rem 1rem 3.25rem;
+  padding: 3.25rem 1rem 3.75rem;
   border-bottom: 4px solid var(--orange);
 }
 
@@ -50,13 +50,13 @@ body {
 }
 
 .app-header .logo {
-  height: 104px;
+  height: 160px;
   width: auto;
   flex: 0 0 auto;
   background: var(--blanc);
-  border-radius: 14px;
-  padding: 14px 18px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  padding: 20px 26px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
 }
 
 .app-header h1 {
