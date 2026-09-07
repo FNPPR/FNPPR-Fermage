@@ -599,6 +599,17 @@ tbody tr.surligne td {
   color: var(--bleu-fonce);
 }
 
+.appel-taxes-auto {
+  background: var(--bleu-clair);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.appel-taxes-auto .appel-ligne-calc {
+  font-size: 0.92rem;
+}
+
 .appel-ligne-saisie {
   display: grid;
   grid-template-columns: 2fr 1fr auto;
