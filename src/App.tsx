@@ -7,6 +7,7 @@ import { IndicesTable } from "./components/IndicesTable";
 import { RevueAd } from "./components/RevueAd";
 import { ANNEE_MAX } from "./data/indices";
 import { useEtatFermageBase } from "./lib/etatFermageBase";
+import { useEtatTaxeFonciere } from "./lib/etatTaxeFonciere";
 import logoUrl from "./assets/logo-fnppr.jpg";
 
 const FNPPR = {
@@ -30,6 +31,7 @@ const ONGLETS: { id: Onglet; libelle: string }[] = [
 export function App() {
   const [onglet, setOnglet] = useState<Onglet>("indexation");
   const fermageBase = useEtatFermageBase();
+  const taxeFonciere = useEtatTaxeFonciere();
 
   return (
     <>
@@ -73,8 +75,14 @@ export function App() {
               <IndexationCalculator fermageBase={fermageBase} />
             )}
             {onglet === "bornes" && <BornesPrefectorales />}
-            {onglet === "taxe" && <TaxeFonciere />}
-            {onglet === "appel" && <AppelFermage fermageBase={fermageBase} />}
+            {onglet === "taxe" && <TaxeFonciere etat={taxeFonciere} />}
+            {onglet === "appel" && (
+              <AppelFermage
+                fermageBase={fermageBase}
+                taxeFonciere={taxeFonciere}
+                onVoirTaxeFonciere={() => setOnglet("taxe")}
+              />
+            )}
             {onglet === "indices" && <IndicesTable />}
           </div>
         </div>

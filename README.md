@@ -36,12 +36,20 @@ hébergé sur n'importe quel hébergement statique (GitHub Pages, Netlify…).
    la même formule de reconstruction que la TFNB (méthode « tfnb »), et non
    la formule « simple » des autres taxes annexes (chambre d'agriculture,
    remembrement, taxes syndicales).
-5. **Appel de fermage** — compose, à partir de la réévaluation du loyer et du
-   total des impôts et taxes imputés au preneur, le décompte final à lui
-   adresser (fermage réévalué, déduction d'un acompte déjà versé, lignes
-   d'impôts et taxes, total de l'échéance), avec un aperçu de courrier prêt à
-   imprimer (`window.print()`, avec une feuille de style dédiée qui n'imprime
-   que le courrier).
+5. **Appel de fermage** — compose le décompte final à adresser au preneur.
+   Entièrement relié aux deux modules précédents (état partagé via
+   `App.tsx`, sans aucune ressaisie) :
+   - le loyer, l'année de départ et l'année de calcul sont **communs** avec
+     l'onglet Réévaluation ;
+   - les lignes de taxes dont le montant imputé au preneur est non nul sont
+     **reprises automatiquement** depuis l'onglet Répartition des taxes
+     foncières (avec un lien direct pour les vérifier/modifier).
+
+   S'y ajoutent l'acompte déjà versé à déduire et des lignes de charges
+   complémentaires libres (pour tout ce qui n'est pas couvert par les 6
+   lignes standard). Le résultat est un aperçu de courrier prêt à imprimer
+   ou enregistrer en PDF (`window.print()`, avec une feuille de style dédiée
+   qui n'imprime que le courrier).
 
 ## L'indice national des fermages
 
@@ -114,14 +122,17 @@ npm run preview    # prévisualiser le build de production
 
 ```
 src/
-  data/indices.ts          Valeurs officielles de l'indice national des fermages
-  lib/fermage.ts           Fonctions de calcul pures (réévaluation, bornes)
-  lib/taxeFonciere.ts      Répartition des taxes foncières et assimilées
-  lib/appelFermage.ts      Composition du décompte d'appel de fermage
-  lib/format.ts            Formatage € / % / nombres (fr-FR)
-  components/              Composants de l'interface (un par module de calcul)
-  App.tsx                  Mise en page et navigation par onglets
-  main.tsx                 Point d'entrée React
+  data/indices.ts           Valeurs officielles de l'indice national des fermages
+  lib/fermage.ts            Fonctions de calcul pures (réévaluation, bornes)
+  lib/taxeFonciere.ts       Répartition des taxes foncières et assimilées (calcul pur)
+  lib/taxeFonciereLignes.ts Modèle des 6 lignes de taxes + calcul agrégé (réutilisé par l'Appel de fermage)
+  lib/etatFermageBase.ts    État partagé (loyer, années) entre Réévaluation et Appel de fermage
+  lib/etatTaxeFonciere.ts   État partagé des lignes de taxes, entre les deux mêmes onglets
+  lib/appelFermage.ts       Composition du décompte d'appel de fermage
+  lib/format.ts             Formatage € / % / nombres (fr-FR)
+  components/               Composants de l'interface (un par module de calcul)
+  App.tsx                   Mise en page et navigation par onglets
+  main.tsx                  Point d'entrée React
 ```
 
 ## Avertissement

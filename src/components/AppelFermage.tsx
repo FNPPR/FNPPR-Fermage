@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { calculerAppelFermage, type LigneCharge } from "../lib/appelFermage";
+import { calculerToutesLesLignes } from "../lib/taxeFonciereLignes";
 import { ANNEE_MAX, INDICES_FERMAGE } from "../data/indices";
 import type { EtatFermageBase } from "../lib/etatFermageBase";
+import type { EtatTaxeFonciere } from "../lib/etatTaxeFonciere";
 import { formaterEuros, formaterNombre } from "../lib/format";
 
 const ANNEES = INDICES_FERMAGE.map((i) => i.annee);
@@ -33,8 +35,12 @@ const deuxChiffres = (annee: number) => String(annee).slice(-2);
 
 export function AppelFermage({
   fermageBase: { loyer, setLoyer, anneeDepart, setAnneeDepart, anneeArrivee, setAnneeArrivee },
+  taxeFonciere,
+  onVoirTaxeFonciere,
 }: {
   fermageBase: EtatFermageBase;
+  taxeFonciere: EtatTaxeFonciere;
+  onVoirTaxeFonciere: () => void;
 }) {
   // Destinataire et période
   const [civilite, setCivilite] = useState(CIVILITES[0]);
@@ -64,6 +70,28 @@ export function AppelFermage({
     setLignes((arr) => (arr.length > 1 ? arr.filter((l) => l.id !== id) : arr));
   }
 
+  // Lignes de taxes calculées automatiquement depuis l'onglet « Répartition
+  // des taxes foncières et assimilées » (même état, partagé via App.tsx).
+  const calculTaxe = useMemo(
+    () =>
+      calculerToutesLesLignes(
+        taxeFonciere.lignes,
+        taxeFonciere.tauxDegrevement,
+        taxeFonciere.coefficient,
+      ),
+    [taxeFonciere.lignes, taxeFonciere.tauxDegrevement, taxeFonciere.coefficient],
+  );
+  const lignesAutoTaxe: LigneCharge[] =
+    "resultats" in calculTaxe
+      ? calculTaxe.resultats
+          .filter(({ res }) => res.imputePreneur !== 0)
+          .map(({ ligne, res }) => ({
+            id: `taxe-${ligne.id}`,
+            libelle: ligne.libelle,
+            montant: res.imputePreneur,
+          }))
+      : [];
+
   const calcul = useMemo(() => {
     const montantLoyer = num(loyer);
     const montantAcompte = num(acompte);
@@ -74,7 +102,7 @@ export function AppelFermage({
       return { erreur: "Saisissez un acompte valide (0 si aucun acompte à déduire)." };
     }
 
-    const charges: LigneCharge[] = [];
+    const chargesLibres: LigneCharge[] = [];
     for (const l of lignes) {
       if (!l.libelle.trim() && !l.montant.trim()) continue; // ligne vide ignorée
       const montant = num(l.montant || "0");
@@ -83,7 +111,7 @@ export function AppelFermage({
           erreur: `Montant invalide pour la ligne « ${l.libelle || "sans libellé"} ».`,
         };
       }
-      charges.push({
+      chargesLibres.push({
         id: l.id,
         libelle: l.libelle.trim() || "Ligne sans libellé",
         montant,
@@ -96,13 +124,13 @@ export function AppelFermage({
         anneeDepart,
         anneeArrivee,
         acompte: montantAcompte,
-        charges,
+        charges: [...lignesAutoTaxe, ...chargesLibres],
       });
       return { resultat };
     } catch (e) {
       return { erreur: e instanceof Error ? e.message : "Erreur de calcul." };
     }
-  }, [loyer, acompte, anneeDepart, anneeArrivee, lignes]);
+  }, [loyer, acompte, anneeDepart, anneeArrivee, lignes, lignesAutoTaxe]);
 
   const libellePeriode =
     periode === "annuel"
@@ -118,11 +146,12 @@ export function AppelFermage({
     <section className="card" aria-labelledby="titre-appel">
       <h2 id="titre-appel">Appel de fermage</h2>
       <p className="intro">
-        Composez le décompte à adresser au preneur : reprend la réévaluation
-        du loyer selon l'indice national (onglet « Réévaluation ») et le
-        total des impôts et taxes qui lui sont imputés (onglet « Répartition
-        des taxes foncières et assimilées »), pour produire un courrier prêt
-        à imprimer.
+        Composez le décompte à adresser au preneur : cet onglet est
+        entièrement relié aux onglets « Réévaluation » et « Répartition des
+        taxes foncières et assimilées » — loyer, années et taxes imputées au
+        preneur sont repris automatiquement, sans ressaisie. Le résultat est
+        un courrier directement modifiable ci-dessous, prêt à imprimer ou à
+        enregistrer en PDF.
       </p>
 
       {/* Destinataire et période */}
@@ -249,10 +278,57 @@ export function AppelFermage({
 
       {/* Impôts & Taxes */}
       <h3 className="appel-soustitre">Impôts &amp; Taxes</h3>
-      <p className="intro" style={{ marginBottom: "0.6rem" }}>
-        Reportez ici le montant imputé au preneur pour chaque ligne calculée
-        dans l'onglet « Répartition des taxes foncières et assimilées »
-        (laissez vide si aucune taxe n'est refacturée).
+
+      {"erreur" in calculTaxe && (
+        <p className="erreur">
+          Les taxes de l'onglet « Répartition des taxes foncières et
+          assimilées » n'ont pas pu être calculées ({calculTaxe.erreur}) et ne
+          sont donc pas incluses ci-dessous.
+        </p>
+      )}
+
+      <div className="appel-taxes-auto">
+        <p className="intro" style={{ marginBottom: "0.5rem" }}>
+          Reprises automatiquement depuis l'onglet «&nbsp;Répartition des
+          taxes foncières et assimilées&nbsp;» (montants imputés au preneur,
+          hors lignes nulles) :
+        </p>
+        {lignesAutoTaxe.length === 0 ? (
+          <p className="intro" style={{ marginBottom: "0.5rem" }}>
+            Aucune — toutes les lignes de cet onglet sont actuellement à 0.
+          </p>
+        ) : (
+          lignesAutoTaxe.map((c) => (
+            <div className="appel-ligne-calc" key={c.id}>
+              <span>{c.libelle}</span>
+              <span>{formaterEuros(c.montant)}</span>
+            </div>
+          ))
+        )}
+        <button
+          type="button"
+          className="lien-toggle"
+          onClick={onVoirTaxeFonciere}
+          style={{
+            background: "none",
+            border: "none",
+            color: "var(--bleu)",
+            fontWeight: 600,
+            cursor: "pointer",
+            padding: 0,
+            marginTop: "0.5rem",
+            textDecoration: "underline",
+            fontSize: "0.88rem",
+          }}
+        >
+          → Vérifier / modifier ces montants dans l'onglet Répartition des
+          taxes foncières
+        </button>
+      </div>
+
+      <p className="intro" style={{ margin: "1.1rem 0 0.6rem" }}>
+        <strong>Charges complémentaires</strong> (facultatif) — toute autre
+        ligne non couverte ci-dessus (ex. taxe hors barème, frais divers) :
       </p>
       {lignes.map((l) => (
         <div className="appel-ligne-saisie" key={l.id}>

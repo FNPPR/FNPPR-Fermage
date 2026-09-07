@@ -27,3 +27,8 @@ export function formaterPourcentage(valeur: number): string {
   const signe = valeur > 0 ? "+" : "";
   return `${signe}${nombreFormatter.format(valeur)} %`;
 }
+
+/** Convertit une saisie texte (virgule ou point décimal) en nombre. */
+export function parseNombre(saisie: string): number {
+  return Number(saisie.replace(",", ".").trim());
+}
