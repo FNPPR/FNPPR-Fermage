@@ -703,10 +703,27 @@ tbody tr.surligne td {
   margin: 0 0 0.85rem;
 }
 
+.appel-entete {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.appel-expediteur,
 .appel-destinataire {
-  margin-left: auto;
-  width: fit-content;
   text-align: left;
+}
+
+.appel-lieu-date {
+  text-align: right;
+}
+
+.appel-objet {
+  font-weight: 700;
+  color: var(--bleu-fonce);
+  margin-bottom: 1.25rem !important;
 }
 
 .appel-titre-bloc {
@@ -746,20 +763,36 @@ tbody tr.surligne td {
 }
 
 @media print {
-  body * {
-    visibility: hidden;
+  /* N'imprime que le courrier (#appel-lettre) : tout le reste (bandeau,
+   * onglets, colonne revue, pied de page, formulaire de saisie) est
+   * retiré de la mise en page plutôt que simplement masqué, pour éviter
+   * les pages blanches en trop derrière le courrier. */
+  .app-header,
+  .pub,
+  nav.tabs,
+  .app-footer,
+  .no-print {
+    display: none !important;
   }
-  #appel-lettre,
-  #appel-lettre * {
-    visibility: visible;
+  body {
+    background: var(--blanc);
+  }
+  main {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+  .layout {
+    display: block;
+  }
+  .card {
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
   }
   #appel-lettre {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
     margin: 0;
-    padding: 2rem;
+    padding: 0;
     border: none;
     box-shadow: none;
   }

@@ -47,9 +47,15 @@ hébergé sur n'importe quel hébergement statique (GitHub Pages, Netlify…).
 
    S'y ajoutent l'acompte déjà versé à déduire et des lignes de charges
    complémentaires libres (pour tout ce qui n'est pas couvert par les 6
-   lignes standard). Le résultat est un aperçu de courrier prêt à imprimer
-   ou enregistrer en PDF (`window.print()`, avec une feuille de style dédiée
-   qui n'imprime que le courrier).
+   lignes standard). Le résultat est une vraie mise en page de courrier
+   (expéditeur et destinataire en en-tête, lieu et date, objet, formule de
+   politesse et signature), prêt à imprimer ou enregistrer en PDF
+   (`window.print()`, avec une feuille de style dédiée qui n'imprime que le
+   courrier — sans page blanche superflue). L'application rappelle à
+   l'écran comment décocher, dans la boîte d'impression du navigateur,
+   l'option « En-têtes et pieds de page » qui ajouterait sinon l'URL du
+   site en bas de chaque page (réglage du navigateur, non désactivable
+   depuis la page elle-même).
 
 ## L'indice national des fermages
 
