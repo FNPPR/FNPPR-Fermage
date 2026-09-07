@@ -46,8 +46,9 @@ export function App() {
             <h1>Calculateur de fermage</h1>
             <p>
               L'outil pensé pour les propriétaires ruraux : réévaluez vos
-              loyers, vérifiez vos bornes préfectorales et éditez vos appels
-              de fermage, le tout en toute simplicité.
+              loyers, vérifiez les minimas et maximas, calculez la
+              répartition des taxes foncières et éditez vos appels de
+              fermage.
             </p>
           </div>
         </div>
