@@ -45,9 +45,9 @@ export function App() {
           <div>
             <h1>Calculateur de fermage</h1>
             <p>
-              Pour les propriétaires ruraux — réévaluation selon l'indice
-              national, minimas et maximas et répartition des taxes foncières
-              et assimilées.
+              L'outil pensé pour les propriétaires ruraux : réévaluez vos
+              loyers, vérifiez vos bornes préfectorales et éditez vos appels
+              de fermage, le tout en toute simplicité.
             </p>
           </div>
         </div>
