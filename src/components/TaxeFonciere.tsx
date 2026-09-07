@@ -118,11 +118,11 @@ const LIGNES_INITIALES: LigneUI[] = [
   {
     id: "gemapi",
     libelle: "Taxe GEMAPI",
-    methode: "simple",
+    methode: "tfnb",
     modeAssiette: "montantGlobal",
     assietteDegrevee: true,
     note:
-      "Taxe récente : vérifiez d'abord que le bail comporte bien une clause de remboursement de la taxe GEMAPI avant d'en imputer une part au preneur.",
+      "Taxe additionnelle à la TFNB, assise sur la même base et bénéficiant du même dégrèvement de 30 % : sa répartition suit donc la même formule de reconstruction que la TFNB (et non la formule « simple » des autres taxes annexes). Vérifiez d'abord que le bail comporte bien une clause de remboursement de la taxe GEMAPI avant d'en imputer une part au preneur.",
     aideMontantAppele:
       "Imposition Taxe GEMAPI : revenu cadastral dégrevé (−30 %) × taux Taxe GEMAPI (bas de colonne « Taxe GEMAPI / Propriétés non bâties »)",
     aidePartExploitee:
@@ -394,7 +394,7 @@ export function TaxeFonciere() {
             <div className="taxe-bloc-titre">
               <span>{ligne.libelle}</span>
               <span className={`badge ${ligne.methode === "tfnb" ? "conforme" : "inferieur"}`}>
-                {ligne.methode === "tfnb" ? "TFNB · dégrèvement 2025" : "taxe annexe"}
+                {ligne.methode === "tfnb" ? "Base dégrevée · réforme 2025" : "taxe annexe"}
               </span>
             </div>
 
@@ -595,11 +595,17 @@ export function TaxeFonciere() {
           fois l'assiette connue :
         </p>
         <p className="formule">
-          TFNB (parts communale et intercommunale) — méthode de la réforme
-          2025 :<br />
+          TFNB (parts communale et intercommunale) et taxe GEMAPI — méthode
+          de la réforme 2025 :<br />
           Imputé au preneur = Montant total × (Taux du bail − Taux de
           dégrèvement) × Coefficient correcteur × (1 + frais de rôle si Taux du
           bail &gt; dégrèvement)
+        </p>
+        <p style={{ fontSize: "0.85rem" }}>
+          La taxe GEMAPI est une taxe additionnelle à la TFNB, assise sur la
+          même base et bénéficiant du même dégrèvement de 30 % : elle suit
+          donc la même formule de reconstruction, et non celle des « autres
+          taxes » ci-dessous.
         </p>
         <ul>
           <li>
@@ -616,9 +622,9 @@ export function TaxeFonciere() {
           </li>
         </ul>
         <p>
-          <strong>Autres taxes</strong> (chambre d'agriculture, GEMAPI,
-          remembrement, taxes syndicales…), non concernées par la formule de
-          dégrèvement ci-dessus :
+          <strong>Autres taxes</strong> (chambre d'agriculture, remembrement,
+          taxes syndicales…), non concernées par la formule de dégrèvement
+          ci-dessus :
         </p>
         <p className="formule">
           Imputé au preneur = Montant total × Taux du bail × (1 + frais de rôle)

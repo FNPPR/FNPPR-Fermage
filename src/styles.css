@@ -250,17 +250,21 @@ main {
 }
 
 .champ input,
-.champ select {
+.champ select,
+.champ textarea {
   font-size: 1rem;
   padding: 0.6rem 0.7rem;
   border: 1px solid var(--gris-bord);
   border-radius: 7px;
   background: var(--blanc);
   color: var(--gris-texte);
+  font-family: inherit;
+  resize: vertical;
 }
 
 .champ input:focus,
-.champ select:focus {
+.champ select:focus,
+.champ textarea:focus {
   outline: 2px solid var(--bleu-accent);
   outline-offset: 1px;
   border-color: var(--bleu-accent);
@@ -586,6 +590,168 @@ tbody tr.surligne td {
   border-radius: 6px;
   padding: 0.55rem 0.75rem;
   font-size: 0.9rem;
+}
+
+/* Appel de fermage */
+.appel-soustitre {
+  margin: 0 0 0.6rem;
+  font-size: 1.02rem;
+  color: var(--bleu-fonce);
+}
+
+.appel-ligne-saisie {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.appel-ligne-saisie input {
+  font-size: 0.95rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--gris-bord);
+  border-radius: 7px;
+  background: var(--blanc);
+  color: var(--gris-texte);
+}
+
+.appel-ligne-saisie input:focus {
+  outline: 2px solid var(--bleu-accent);
+  outline-offset: 1px;
+  border-color: var(--bleu-accent);
+}
+
+.btn-supprimer {
+  border: 1px solid var(--gris-bord);
+  background: var(--blanc);
+  color: var(--gris-doux);
+  border-radius: 7px;
+  width: 2.4rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-supprimer:hover:not(:disabled) {
+  background: #fdecea;
+  color: var(--rouge);
+  border-color: var(--rouge);
+}
+
+.btn-supprimer:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-ajouter {
+  border: 1px dashed var(--bleu-accent);
+  background: var(--bleu-clair);
+  color: var(--bleu-fonce);
+  font-weight: 600;
+  border-radius: 7px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.btn-ajouter:hover {
+  background: #d7e5f4;
+}
+
+.btn-imprimer {
+  display: block;
+  margin: 1.25rem 0 0;
+  background: var(--bleu);
+  color: var(--blanc);
+  border: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.75rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-imprimer:hover {
+  background: var(--bleu-fonce);
+}
+
+.appel-lettre {
+  margin-top: 0.75rem;
+  padding: 1.75rem 2rem;
+  border: 1px solid var(--gris-bord);
+  border-radius: var(--rayon);
+  background: var(--blanc);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--gris-texte);
+}
+
+.appel-lettre p {
+  margin: 0 0 0.85rem;
+}
+
+.appel-destinataire {
+  margin-left: auto;
+  width: fit-content;
+  text-align: left;
+}
+
+.appel-titre-bloc {
+  font-weight: 700;
+  color: var(--bleu-fonce);
+  margin: 1rem 0 0.4rem !important;
+  text-decoration: underline;
+}
+
+.appel-ligne-calc {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.2rem 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.appel-sous-total {
+  border-top: 1px dashed var(--gris-bord);
+  margin-top: 0.2rem;
+  padding-top: 0.4rem;
+  font-weight: 700;
+}
+
+.appel-total {
+  border-top: 2px solid var(--bleu-fonce);
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--bleu-fonce);
+}
+
+.appel-signature {
+  margin-top: 1.75rem !important;
+  text-align: right;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #appel-lettre,
+  #appel-lettre * {
+    visibility: visible;
+  }
+  #appel-lettre {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 2rem;
+    border: none;
+    box-shadow: none;
+  }
 }
 
 /* Réseaux sociaux FNPPR */

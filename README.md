@@ -31,6 +31,18 @@ hébergé sur n'importe quel hébergement statique (GitHub Pages, Netlify…).
    - **taux à l'hectare × surface louée** — pour les taxes assises
      directement sur la surface (remembrement, taxes syndicales / de marais).
 
+   La taxe GEMAPI est une taxe additionnelle à la TFNB, assise sur la même
+   base et bénéficiant du même dégrèvement de 30 % : sa répartition suit donc
+   la même formule de reconstruction que la TFNB (méthode « tfnb »), et non
+   la formule « simple » des autres taxes annexes (chambre d'agriculture,
+   remembrement, taxes syndicales).
+5. **Appel de fermage** — compose, à partir de la réévaluation du loyer et du
+   total des impôts et taxes imputés au preneur, le décompte final à lui
+   adresser (fermage réévalué, déduction d'un acompte déjà versé, lignes
+   d'impôts et taxes, total de l'échéance), avec un aperçu de courrier prêt à
+   imprimer (`window.print()`, avec une feuille de style dédiée qui n'imprime
+   que le courrier).
+
 ## L'indice national des fermages
 
 Base 100 en 2009. Depuis la loi de modernisation de l'agriculture du
@@ -104,7 +116,8 @@ npm run preview    # prévisualiser le build de production
 src/
   data/indices.ts          Valeurs officielles de l'indice national des fermages
   lib/fermage.ts           Fonctions de calcul pures (réévaluation, bornes)
-  lib/fermage.test.ts      Tests unitaires (Vitest)
+  lib/taxeFonciere.ts      Répartition des taxes foncières et assimilées
+  lib/appelFermage.ts      Composition du décompte d'appel de fermage
   lib/format.ts            Formatage € / % / nombres (fr-FR)
   components/              Composants de l'interface (un par module de calcul)
   App.tsx                  Mise en page et navigation par onglets

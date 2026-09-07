@@ -57,14 +57,21 @@
  *    méthodes de calcul du montant imputé au preneur.
  * ---------------------------------------------------------------------------
  *
- *  - « tfnb »   : parts communale et intercommunale de la TFNB (réforme 2025).
+ *  - « tfnb »   : parts communale et intercommunale de la TFNB, ET taxe
+ *       GEMAPI (réforme 2025). La taxe GEMAPI est en effet une taxe
+ *       additionnelle à la TFNB, assise sur exactement la même base et
+ *       bénéficiant du même dégrèvement de 30 % avant émission de l'avis :
+ *       elle suit donc la même formule de reconstruction que la TFNB, et NON
+ *       la formule « simple » ci-dessous (une erreur fréquente, qui aboutit
+ *       sinon à une quote-part fausse dès que le taux du bail diffère du
+ *       taux de dégrèvement).
  *       imputé = Montant total × (Taux du bail − Taux de dégrèvement)
  *                × Coefficient correcteur
  *                × (1 + frais de rôle SI Taux du bail > Taux de dégrèvement)
  *       Résultat négatif = réduction du fermage en faveur du preneur ;
  *       positif = remboursement du preneur au bailleur.
- *  - « simple » : autres taxes (chambre d'agriculture, GEMAPI, remembrement,
- *       taxes syndicales / de marais…), non concernées par la formule de
+ *  - « simple » : autres taxes (chambre d'agriculture, remembrement, taxes
+ *       syndicales / de marais…), non concernées par la formule de
  *       dégrèvement ci-dessus (même si leur assiette peut, elle, être
  *       dégrevée — voir mode « revenuCadastral »).
  *       imputé = Montant total × Taux du bail × (1 + frais de rôle)
