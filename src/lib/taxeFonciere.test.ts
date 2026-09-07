@@ -138,6 +138,22 @@ describe("calculerLigneTaxe — méthode tfnb (réforme 2025)", () => {
     expect(r.montantTotal).toBe(140);
     expect(r.imputePreneur).toBeCloseTo(41.24, 2);
   });
+
+  it("taxe GEMAPI (assiette dégrevée comme la TFNB) : taux du bail < dégrèvement → réduction en faveur du preneur", () => {
+    // Régression : la taxe GEMAPI est une taxe additionnelle à la TFNB, assise
+    // sur la même base dégrevée de 30 % ; elle doit suivre la même formule de
+    // reconstruction (méthode « tfnb »), pas la formule « simple ». Avec un
+    // taux du bail de 20 % (< 30 % de dégrèvement), le résultat doit être
+    // négatif, exactement comme pour la TFNB.
+    // assiette = 200 (montant global, part exploitant 100 %)
+    // imputé = 200 × (0,20 − 0,30) × 1,43 = -28,60
+    const r = calculerLigneTaxe(
+      pleinePart,
+      { tauxBail: 0.2, fraisDeRole: 0.03 },
+      "tfnb",
+    );
+    expect(r.imputePreneur).toBeCloseTo(-28.6, 2);
+  });
 });
 
 describe("calculerLigneTaxe — méthode simple", () => {
