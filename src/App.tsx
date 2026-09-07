@@ -6,6 +6,7 @@ import { AppelFermage } from "./components/AppelFermage";
 import { IndicesTable } from "./components/IndicesTable";
 import { RevueAd } from "./components/RevueAd";
 import { ANNEE_MAX } from "./data/indices";
+import { useEtatFermageBase } from "./lib/etatFermageBase";
 import logoUrl from "./assets/logo-fnppr.jpg";
 
 const FNPPR = {
@@ -28,6 +29,7 @@ const ONGLETS: { id: Onglet; libelle: string }[] = [
 
 export function App() {
   const [onglet, setOnglet] = useState<Onglet>("indexation");
+  const fermageBase = useEtatFermageBase();
 
   return (
     <>
@@ -67,10 +69,12 @@ export function App() {
               ))}
             </nav>
 
-            {onglet === "indexation" && <IndexationCalculator />}
+            {onglet === "indexation" && (
+              <IndexationCalculator fermageBase={fermageBase} />
+            )}
             {onglet === "bornes" && <BornesPrefectorales />}
             {onglet === "taxe" && <TaxeFonciere />}
-            {onglet === "appel" && <AppelFermage />}
+            {onglet === "appel" && <AppelFermage fermageBase={fermageBase} />}
             {onglet === "indices" && <IndicesTable />}
           </div>
         </div>

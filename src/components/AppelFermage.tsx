@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { calculerAppelFermage, type LigneCharge } from "../lib/appelFermage";
 import { ANNEE_MAX, INDICES_FERMAGE } from "../data/indices";
+import type { EtatFermageBase } from "../lib/etatFermageBase";
 import { formaterEuros, formaterNombre } from "../lib/format";
 
 const ANNEES = INDICES_FERMAGE.map((i) => i.annee);
@@ -30,7 +31,11 @@ const num = (s: string) => Number(s.replace(",", ".").trim());
 
 const deuxChiffres = (annee: number) => String(annee).slice(-2);
 
-export function AppelFermage() {
+export function AppelFermage({
+  fermageBase: { loyer, setLoyer, anneeDepart, setAnneeDepart, anneeArrivee, setAnneeArrivee },
+}: {
+  fermageBase: EtatFermageBase;
+}) {
   // Destinataire et période
   const [civilite, setCivilite] = useState(CIVILITES[0]);
   const [destinataire, setDestinataire] = useState("");
@@ -39,9 +44,6 @@ export function AppelFermage() {
   const [echeance, setEcheance] = useState("");
 
   // Fermage
-  const [loyer, setLoyer] = useState("1000");
-  const [anneeDepart, setAnneeDepart] = useState(ANNEE_MAX - 1);
-  const [anneeArrivee, setAnneeArrivee] = useState(ANNEE_MAX);
   const [acompte, setAcompte] = useState("0");
 
   // Impôts & taxes
@@ -190,6 +192,10 @@ export function AppelFermage() {
 
       {/* Fermage */}
       <h3 className="appel-soustitre">Fermage</h3>
+      <p className="intro" style={{ marginBottom: "0.6rem" }}>
+        Ces trois champs sont communs avec l'onglet « Réévaluation » : une
+        saisie ici ou là-bas se retrouve dans les deux.
+      </p>
       <div className="grille" style={{ marginBottom: "1rem" }}>
         <div className="champ">
           <label htmlFor="ap-loyer">Loyer de référence (€)</label>

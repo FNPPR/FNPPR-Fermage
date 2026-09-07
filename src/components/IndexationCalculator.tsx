@@ -4,6 +4,7 @@ import {
   historiqueRevalorisation,
 } from "../lib/fermage";
 import { INDICES_FERMAGE, ANNEE_MAX, ANNEE_MIN } from "../data/indices";
+import type { EtatFermageBase } from "../lib/etatFermageBase";
 import {
   formaterEuros,
   formaterNombre,
@@ -12,10 +13,11 @@ import {
 
 const ANNEES = INDICES_FERMAGE.map((i) => i.annee);
 
-export function IndexationCalculator() {
-  const [loyer, setLoyer] = useState("1000");
-  const [anneeDepart, setAnneeDepart] = useState(ANNEE_MAX - 1);
-  const [anneeArrivee, setAnneeArrivee] = useState(ANNEE_MAX);
+export function IndexationCalculator({
+  fermageBase: { loyer, setLoyer, anneeDepart, setAnneeDepart, anneeArrivee, setAnneeArrivee },
+}: {
+  fermageBase: EtatFermageBase;
+}) {
   const [afficherHistorique, setAfficherHistorique] = useState(false);
 
   const calcul = useMemo(() => {
