@@ -134,7 +134,7 @@ export function IndexationCalculator({
                   marginTop: "0.9rem",
                   background: "none",
                   border: "none",
-                  color: "var(--vert)",
+                  color: "var(--bleu)",
                   fontWeight: 600,
                   cursor: "pointer",
                   padding: 0,
