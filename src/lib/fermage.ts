@@ -8,10 +8,18 @@
 
 import { indicePourAnnee } from "../data/indices";
 
-/** Arrondit un nombre à `decimales` chiffres après la virgule. */
+/**
+ * Arrondit un nombre à `decimales` chiffres après la virgule.
+ *
+ * Normalise le résultat à `0` (et non `-0`) : un écart de calcul infime,
+ * inévitable en arithmétique flottante, peut produire un `-0` mathématiquement
+ * correct mais qui s'affiche « -0,00 € » (au lieu de « 0,00 € ») une fois
+ * formaté — trompeur pour un montant censé être rigoureusement nul.
+ */
 export function arrondir(valeur: number, decimales = 2): number {
   const facteur = 10 ** decimales;
-  return Math.round((valeur + Number.EPSILON) * facteur) / facteur;
+  const arrondi = Math.round((valeur + Number.EPSILON) * facteur) / facteur;
+  return arrondi === 0 ? 0 : arrondi;
 }
 
 // ---------------------------------------------------------------------------
@@ -33,13 +41,14 @@ export interface ResultatRevalorisation {
 }
 
 /**
- * Réévalue un fermage en appliquant le rapport entre l'indice de l'année
- * d'arrivée et celui de l'année de départ :
+ * Réévalue un fermage en appliquant le rapport entre l'indice de l'année de
+ * calcul et celui de l'année antérieure :
  *
- *   nouveau loyer = loyer initial × (indice arrivée / indice départ)
+ *   nouveau fermage = fermage initial × (indice de l'année de calcul ÷
+ *                      indice de l'année antérieure)
  *
- * @throws si l'une des années n'a pas d'indice connu, si le loyer est négatif,
- *         ou si l'indice de départ est nul.
+ * @throws si l'une des années n'a pas d'indice connu, si le fermage est
+ *         négatif, ou si l'indice de l'année antérieure est nul.
  */
 export function revaloriserFermage(
   loyerInitial: number,
@@ -47,7 +56,7 @@ export function revaloriserFermage(
   anneeArrivee: number,
 ): ResultatRevalorisation {
   if (!Number.isFinite(loyerInitial) || loyerInitial < 0) {
-    throw new Error("Le loyer initial doit être un montant positif.");
+    throw new Error("Le fermage initial doit être un montant positif.");
   }
 
   const indiceDepart = indicePourAnnee(anneeDepart);
@@ -60,7 +69,7 @@ export function revaloriserFermage(
     throw new Error(`Aucun indice connu pour l'année ${anneeArrivee}.`);
   }
   if (indiceDepart === 0) {
-    throw new Error("L'indice de l'année de départ ne peut pas être nul.");
+    throw new Error("L'indice de l'année antérieure ne peut pas être nul.");
   }
 
   const loyerExact = (loyerInitial * indiceArrivee) / indiceDepart;

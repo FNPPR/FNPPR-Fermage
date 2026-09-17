@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { calculerAppelFermage, type LigneCharge } from "../lib/appelFermage";
 import { calculerToutesLesLignes } from "../lib/taxeFonciereLignes";
 import { ANNEE_MAX, INDICES_FERMAGE } from "../data/indices";
 import type { EtatFermageBase } from "../lib/etatFermageBase";
 import type { EtatTaxeFonciere } from "../lib/etatTaxeFonciere";
 import { formaterEuros, formaterNombre } from "../lib/format";
+import { useLocalStorageState } from "../lib/useLocalStorageState";
 
 const ANNEES = INDICES_FERMAGE.map((i) => i.annee);
 
@@ -23,10 +24,15 @@ interface LigneUI {
   montant: string;
 }
 
+// Préfixe unique à ce chargement de page : les lignes restaurées depuis le
+// stockage local d'une session précédente portent déjà des identifiants
+// `ligne-…` — sans ce préfixe, un compteur qui repart de 1 à chaque
+// rechargement pourrait produire un identifiant en double.
+const prefixeLigne = `ligne-${Date.now().toString(36)}`;
 let compteurLigne = 0;
 function nouvelleLigne(libelle = "", montant = ""): LigneUI {
   compteurLigne += 1;
-  return { id: `ligne-${compteurLigne}`, libelle, montant };
+  return { id: `${prefixeLigne}-${compteurLigne}`, libelle, montant };
 }
 
 const num = (s: string) => Number(s.replace(",", ".").trim());
@@ -49,23 +55,45 @@ export function AppelFermage({
   taxeFonciere: EtatTaxeFonciere;
   onVoirTaxeFonciere: () => void;
 }) {
-  // Expéditeur, destinataire, lieu et date
-  const [expediteur, setExpediteur] = useState("");
-  const [destinataire, setDestinataire] = useState("");
-  const [lieu, setLieu] = useState("");
-  const [dateCourrier, setDateCourrier] = useState(dateDuJour);
+  // Expéditeur, destinataire, lieu et date — conservés sur cet appareil
+  // (localStorage) d'une visite à l'autre, comme le reste de cette page.
+  const [expediteur, setExpediteur] = useLocalStorageState(
+    "fnppr-appel-expediteur",
+    "",
+  );
+  const [destinataire, setDestinataire] = useLocalStorageState(
+    "fnppr-appel-destinataire",
+    "",
+  );
+  const [lieu, setLieu] = useLocalStorageState("fnppr-appel-lieu", "");
+  const [dateCourrier, setDateCourrier] = useLocalStorageState(
+    "fnppr-appel-date",
+    dateDuJour(),
+  );
 
   // Objet et période
-  const [civilite, setCivilite] = useState(CIVILITES[0]);
-  const [periode, setPeriode] = useState<Periode>("sem2");
-  const [annee, setAnnee] = useState(ANNEE_MAX);
-  const [echeance, setEcheance] = useState("");
+  const [civilite, setCivilite] = useLocalStorageState(
+    "fnppr-appel-civilite",
+    CIVILITES[0],
+  );
+  const [periode, setPeriode] = useLocalStorageState<Periode>(
+    "fnppr-appel-periode",
+    "sem2",
+  );
+  const [annee, setAnnee] = useLocalStorageState("fnppr-appel-annee", ANNEE_MAX);
+  const [echeance, setEcheance] = useLocalStorageState(
+    "fnppr-appel-echeance",
+    "",
+  );
 
   // Fermage
-  const [acompte, setAcompte] = useState("0");
+  const [acompte, setAcompte] = useLocalStorageState("fnppr-appel-acompte", "0");
 
   // Impôts & taxes
-  const [lignes, setLignes] = useState<LigneUI[]>([nouvelleLigne()]);
+  const [lignes, setLignes] = useLocalStorageState<LigneUI[]>(
+    "fnppr-appel-lignes",
+    [nouvelleLigne()],
+  );
 
   function majLigne(id: string, champ: "libelle" | "montant", valeur: string) {
     setLignes((arr) =>
@@ -105,7 +133,7 @@ export function AppelFermage({
     const montantLoyer = num(loyer);
     const montantAcompte = num(acompte);
     if (!loyer.trim() || !Number.isFinite(montantLoyer)) {
-      return { erreur: "Saisissez un montant de loyer de référence valide." };
+      return { erreur: "Saisissez un montant de fermage de référence valide." };
     }
     if (!Number.isFinite(montantAcompte)) {
       return { erreur: "Saisissez un acompte valide (0 si aucun acompte à déduire)." };
@@ -166,10 +194,12 @@ export function AppelFermage({
         <p className="intro">
           Composez le décompte à adresser au preneur : cet onglet est
           entièrement relié aux onglets « Réévaluation » et « Répartition des
-          taxes foncières et assimilées » — loyer, années et taxes imputées au
-          preneur sont repris automatiquement, sans ressaisie. Le résultat est
-          un courrier directement modifiable ci-dessous, prêt à imprimer ou à
-          enregistrer en PDF.
+          taxes foncières et assimilées » — fermage, années et taxes imputées
+          au preneur sont repris automatiquement, sans ressaisie. Le résultat
+          est un courrier directement modifiable ci-dessous, prêt à imprimer
+          ou à enregistrer en PDF. Vos saisies (coordonnées, date, lieu,
+          acompte…) restent enregistrées sur cet appareil d'une visite à
+          l'autre.
         </p>
 
         {/* Expéditeur, destinataire, lieu et date */}
@@ -279,8 +309,8 @@ export function AppelFermage({
         </p>
         <div className="grille" style={{ marginBottom: "1rem" }}>
           <div className="champ">
-            <label htmlFor="ap-loyer">Loyer de référence (€)</label>
-            <span className="aide">Montant du fermage l'année de départ</span>
+            <label htmlFor="ap-loyer">Fermage de référence (€)</label>
+            <span className="aide">Montant du fermage l'année antérieure</span>
             <input
               id="ap-loyer"
               inputMode="decimal"
@@ -289,7 +319,7 @@ export function AppelFermage({
             />
           </div>
           <div className="champ">
-            <label htmlFor="ap-adepart">Année de départ</label>
+            <label htmlFor="ap-adepart">Année antérieure</label>
             <select
               id="ap-adepart"
               value={anneeDepart}

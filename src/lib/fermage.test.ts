@@ -18,6 +18,12 @@ describe("arrondir", () => {
     expect(arrondir(1.23456, 3)).toBe(1.235);
     expect(arrondir(1.23456, 0)).toBe(1);
   });
+
+  it("normalise -0 en 0 (jamais « -0,00 € » à l'affichage)", () => {
+    expect(arrondir(-0)).toBe(0);
+    expect(Object.is(arrondir(-0), -0)).toBe(false);
+    expect(Object.is(arrondir(-0.001), -0)).toBe(false);
+  });
 });
 
 describe("cohérence des indices officiels", () => {

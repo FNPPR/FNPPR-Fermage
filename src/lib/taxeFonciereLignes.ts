@@ -118,11 +118,11 @@ export const LIGNES_INITIALES: LigneUI[] = [
   {
     id: "gemapi",
     libelle: "Taxe GEMAPI",
-    methode: "tfnb",
+    methode: "simple",
     modeAssiette: "montantGlobal",
     assietteDegrevee: true,
     note:
-      "Taxe additionnelle à la TFNB, assise sur la même base et bénéficiant du même dégrèvement de 30 % : sa répartition suit donc la même formule de reconstruction que la TFNB (et non la formule « simple » des autres taxes annexes). Vérifiez d'abord que le bail comporte bien une clause de remboursement de la taxe GEMAPI avant d'en imputer une part au preneur.",
+      "L'administration fiscale calcule la taxe GEMAPI sur une base déjà réduite à 70 % (même dégrèvement que la TFNB) : l'assiette est donc dégrevée comme pour la TFNB. En revanche, la taxe GEMAPI n'a pas le caractère d'une taxe foncière : sa répartition ne suit PAS la formule de reconstruction de la TFNB (pas de soustraction du taux de dégrèvement, pas de coefficient correcteur), mais la formule « simple » des autres taxes annexes. Vérifiez d'abord que le bail comporte bien une clause de remboursement de la taxe GEMAPI avant d'en imputer une part au preneur.",
     aideMontantAppele:
       "Imposition Taxe GEMAPI : revenu cadastral dégrevé (−30 %) × taux Taxe GEMAPI (bas de colonne « Taxe GEMAPI / Propriétés non bâties »)",
     aidePartExploitee:
@@ -182,6 +182,24 @@ export const LIGNES_INITIALES: LigneUI[] = [
     fraisDeRole: "0",
   },
 ];
+
+/**
+ * Formule littérale du calcul du « Montant total » (l'assiette) pour une
+ * ligne, selon le mode choisi — pour repréciser à l'écran, taxe par taxe,
+ * comment ce montant est obtenu.
+ */
+export function formuleMontantTotal(l: LigneUI): string {
+  switch (l.modeAssiette) {
+    case "montantGlobal":
+      return "Montant total = Montant appelé × Part exploitée";
+    case "revenuCadastral":
+      return l.assietteDegrevee
+        ? "Montant total = Revenu cadastral × (1 − Taux de dégrèvement) × Taux voté"
+        : "Montant total = Revenu cadastral (non dégrevé) × Taux voté";
+    case "hectare":
+      return "Montant total = Taux à l'hectare × Surface louée";
+  }
+}
 
 /** Construit l'assiette à calculer à partir des champs saisis pour une ligne. */
 export function assietteDeLaLigne(l: LigneUI): Assiette {

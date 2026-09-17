@@ -57,24 +57,26 @@
  *    méthodes de calcul du montant imputé au preneur.
  * ---------------------------------------------------------------------------
  *
- *  - « tfnb »   : parts communale et intercommunale de la TFNB, ET taxe
- *       GEMAPI (réforme 2025). La taxe GEMAPI est en effet une taxe
- *       additionnelle à la TFNB, assise sur exactement la même base et
- *       bénéficiant du même dégrèvement de 30 % avant émission de l'avis :
- *       elle suit donc la même formule de reconstruction que la TFNB, et NON
- *       la formule « simple » ci-dessous (une erreur fréquente, qui aboutit
- *       sinon à une quote-part fausse dès que le taux du bail diffère du
- *       taux de dégrèvement).
+ *  - « tfnb »   : parts communale et intercommunale de la TFNB UNIQUEMENT.
  *       imputé = Montant total × (Taux du bail − Taux de dégrèvement)
  *                × Coefficient correcteur
  *                × (1 + frais de rôle SI Taux du bail > Taux de dégrèvement)
  *       Résultat négatif = réduction du fermage en faveur du preneur ;
  *       positif = remboursement du preneur au bailleur.
- *  - « simple » : autres taxes (chambre d'agriculture, remembrement, taxes
- *       syndicales / de marais…), non concernées par la formule de
- *       dégrèvement ci-dessus (même si leur assiette peut, elle, être
- *       dégrevée — voir mode « revenuCadastral »).
+ *  - « simple » : toutes les autres taxes (chambre d'agriculture,
+ *       remembrement, taxes syndicales / de marais…), ET la taxe GEMAPI.
  *       imputé = Montant total × Taux du bail × (1 + frais de rôle)
+ *
+ *       ⚠ La taxe GEMAPI suit la formule « simple », PAS la formule « tfnb »
+ *       — erreur fréquente. Certes, l'administration fiscale la calcule sur
+ *       une base déjà réduite à 70 % (même dégrèvement que la TFNB, à
+ *       reproduire dans l'assiette via `assietteDegrevee: true`, sans quoi
+ *       l'opération porterait sur une base supérieure à l'impôt réel) ; mais
+ *       n'ayant pas elle-même le caractère d'une taxe foncière, elle ne
+ *       bénéficie pas du mécanisme de dégrèvement de 30 % en faveur du
+ *       preneur lors de la RÉPARTITION (pas de soustraction du taux de
+ *       dégrèvement, pas de coefficient correcteur) : seule la formule
+ *       « simple » ci-dessus s'applique, sur l'assiette déjà dégrevée à 70 %.
  *
  * Pour la chambre d'agriculture, le taux de 50 % ne résulte pas d'une clause
  * du bail mais d'une disposition d'ordre public du Code général des impôts
