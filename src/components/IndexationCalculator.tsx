@@ -43,14 +43,14 @@ export function IndexationCalculator({
       <h2 id="titre-indexation">Réévaluation annuelle du fermage</h2>
       <p className="intro">
         Calculez le nouveau montant d'un fermage en appliquant l'indice national
-        des fermages : <strong>nouveau loyer = loyer initial × (indice de
-        l'année d'arrivée / indice de l'année de départ)</strong>.
+        des fermages : <strong>nouveau fermage = fermage initial × (indice de
+        l'année de calcul ÷ indice de l'année antérieure)</strong>.
       </p>
 
       <div className="grille">
         <div className="champ">
-          <label htmlFor="loyer">Loyer de référence (€/an)</label>
-          <span className="aide">Montant du fermage l'année de départ</span>
+          <label htmlFor="loyer">Fermage de référence (€/an)</label>
+          <span className="aide">Montant du fermage l'année antérieure</span>
           <input
             id="loyer"
             inputMode="decimal"
@@ -61,7 +61,7 @@ export function IndexationCalculator({
         </div>
 
         <div className="champ">
-          <label htmlFor="annee-depart">Année de départ</label>
+          <label htmlFor="annee-depart">Année antérieure</label>
           <span className="aide">Année de l'indice de référence</span>
           <select
             id="annee-depart"
@@ -78,7 +78,7 @@ export function IndexationCalculator({
 
         <div className="champ">
           <label htmlFor="annee-arrivee">Année de calcul</label>
-          <span className="aide">Année du nouveau loyer</span>
+          <span className="aide">Année du nouveau fermage</span>
           <select
             id="annee-arrivee"
             value={anneeArrivee}
@@ -105,8 +105,8 @@ export function IndexationCalculator({
                 <span style={{ fontSize: "1rem", fontWeight: 600 }}> /an</span>
               </div>
               <div className="legende">
-                Loyer réévalué pour {anneeArrivee} (départ {anneeDepart}) —
-                variation totale{" "}
+                Fermage réévalué pour {anneeArrivee} (année antérieure{" "}
+                {anneeDepart}) — variation totale{" "}
                 <strong
                   className={
                     calcul.resultat.variationPct >= 0 ? "pos" : "neg"
@@ -151,7 +151,7 @@ export function IndexationCalculator({
               <div className="tableau-scroll" style={{ marginTop: "1rem" }}>
                 <table>
                   <caption>
-                    Évolution du loyer de {Math.min(anneeDepart, anneeArrivee)}{" "}
+                    Évolution du fermage de {Math.min(anneeDepart, anneeArrivee)}{" "}
                     à {Math.max(anneeDepart, anneeArrivee)}.
                   </caption>
                   <thead>
@@ -159,7 +159,7 @@ export function IndexationCalculator({
                       <th>Année</th>
                       <th>Indice</th>
                       <th>Variation</th>
-                      <th>Loyer (€/an)</th>
+                      <th>Fermage (€/an)</th>
                     </tr>
                   </thead>
                   <tbody>

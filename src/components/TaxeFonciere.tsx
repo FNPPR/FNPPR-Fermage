@@ -7,30 +7,36 @@ import {
 import {
   LIBELLES_MODE,
   calculerToutesLesLignes,
+  formuleMontantTotal,
   type LigneUI,
 } from "../lib/taxeFonciereLignes";
 import type { EtatTaxeFonciere } from "../lib/etatTaxeFonciere";
 import { formaterEuros, parseNombre as num } from "../lib/format";
 
-/** Petit outil autonome d'actualisation d'un revenu cadastral ancien. */
+/**
+ * Petit outil autonome d'actualisation d'un revenu cadastral ancien.
+ *
+ * Volontairement limité à UNE seule année : on part du revenu cadastral de
+ * l'année précédente et on lui applique le taux fiscal d'évolution des
+ * bases voté pour l'année en cours — pas de composition sur plusieurs
+ * années, pour rester au plus près du dernier avis reçu.
+ */
 function OutilRevalorisation() {
   const [base, setBase] = useState("500");
-  const [taux, setTaux] = useState("1.5");
-  const [annees, setAnnees] = useState("3");
+  const [taux, setTaux] = useState("0.8");
 
   const resultat = useMemo(() => {
     const b = num(base);
     const t = num(taux) / 100;
-    const a = num(annees);
-    if (![b, t, a].every(Number.isFinite)) {
+    if (![b, t].every(Number.isFinite)) {
       return { erreur: "Renseignez des valeurs numériques valides." };
     }
     try {
-      return { valeur: revaloriserRevenuCadastral(b, t, a) };
+      return { valeur: revaloriserRevenuCadastral(b, t, 1) };
     } catch (e) {
       return { erreur: e instanceof Error ? e.message : "Erreur de calcul." };
     }
-  }, [base, taux, annees]);
+  }, [base, taux]);
 
   return (
     <details className="explication" style={{ marginBottom: "1.25rem" }}>
@@ -38,16 +44,17 @@ function OutilRevalorisation() {
       <p>
         Le revenu cadastral doit être réactualisé chaque année par
         l'application du <strong>taux fiscal d'évolution des bases</strong>
-        , voté chaque année en loi de finances (valeur variable, à renseigner
-        vous-même). Le revenu cadastral non dégrevé propre à un exploitant
-        est en général le <strong>même montant</strong> pour la part
-        communale, la part intercommunale, la chambre d'agriculture et la
-        taxe GEMAPI : seuls le taux voté et l'application ou non du
-        dégrèvement diffèrent d'une taxe à l'autre.
+        , voté chaque année en loi de finances (0,8 % proposé pour 2026 —
+        à vérifier et corriger chaque année). Le revenu cadastral non
+        dégrevé propre à un exploitant est en général le{" "}
+        <strong>même montant</strong> pour la part communale, la part
+        intercommunale, la chambre d'agriculture et la taxe GEMAPI : seuls
+        le taux voté et l'application ou non du dégrèvement diffèrent d'une
+        taxe à l'autre.
       </p>
       <div className="grille">
         <div className="champ">
-          <label htmlFor="rc-base">Revenu cadastral de référence (€)</label>
+          <label htmlFor="rc-base">Revenu cadastral de l'année précédente (€)</label>
           <input
             id="rc-base"
             inputMode="decimal"
@@ -56,22 +63,13 @@ function OutilRevalorisation() {
           />
         </div>
         <div className="champ">
-          <label htmlFor="rc-taux">Taux d'évolution annuel (%)</label>
-          <span className="aide">Un par année, en moyenne</span>
+          <label htmlFor="rc-taux">Taux d'évolution des bases (%)</label>
+          <span className="aide">0,8 % proposé pour 2026</span>
           <input
             id="rc-taux"
             inputMode="decimal"
             value={taux}
             onChange={(e) => setTaux(e.target.value)}
-          />
-        </div>
-        <div className="champ">
-          <label htmlFor="rc-annees">Nombre d'années</label>
-          <input
-            id="rc-annees"
-            inputMode="decimal"
-            value={annees}
-            onChange={(e) => setAnnees(e.target.value)}
           />
         </div>
       </div>
@@ -114,12 +112,13 @@ export function TaxeFonciere({ etat }: { etat: EtatTaxeFonciere }) {
     <section className="card" aria-labelledby="titre-taxe">
       <h2 id="titre-taxe">Répartition des taxes foncières et assimilées</h2>
       <p className="intro">
-        La taxe foncière est payée par le <strong>bailleur</strong>, mais le bail
-        peut prévoir que le <strong>preneur</strong> en rembourse une part.
-        Depuis 2006, les terres agricoles bénéficient d'un{" "}
-        <strong>dégrèvement</strong> sur la part communale et intercommunale de
-        la taxe foncière non bâtie (TFNB) au profit du preneur ; la loi
-        n°2025-127 du 14/02/2025 l'a porté de 20 % à <strong>30 %</strong>.
+        Le <strong>bailleur</strong> est redevable du paiement des taxes
+        foncières sur les propriétés bâties et non bâties, mais le bail à
+        ferme et/ou le bail-type départemental prévoient que le{" "}
+        <strong>preneur</strong> en rembourse une quote-part. Depuis 2006, les
+        terres agricoles sont affectées d'une <strong>exonération</strong> des
+        bases communale et intercommunale au profit exclusif du preneur ; la
+        loi n°2025-127 du 14/02/2025 l'a portée de 20 % à <strong>30 %</strong>.
       </p>
 
       <div className="info" style={{ marginBottom: "1rem", borderLeftColor: "var(--orange-warning)" }}>
@@ -139,10 +138,13 @@ export function TaxeFonciere({ etat }: { etat: EtatTaxeFonciere }) {
 
       {/* Paramètres réglementaires */}
       <div className="info" style={{ marginBottom: "1rem" }}>
-        <strong>Paramètres réglementaires (réforme 2025).</strong> Le dégrèvement
-        de 30 % s'applique aux parts communale et intercommunale de la TFNB ; le
-        coefficient correcteur (1,43 = 100 ÷ 70) reconstitue la taxe théorique à
-        partir du montant appelé (base abattue de 30 %).
+        <strong>Paramètres réglementaires (réforme 2025).</strong> Le
+        dégrèvement de 30 % (assiette réduite à 70 %) s'applique à la TFNB, à
+        l'exclusion notable de la taxe GEMAPI, qui ne revêt pas le caractère
+        d'une taxe foncière. Le coefficient correcteur (1,43 = 100 ÷ 70)
+        reconstitue la taxe théorique à partir du montant appelé (base
+        abattue de 30 %) ; il n'intervient que dans la répartition de la
+        TFNB, jamais dans celle de la taxe GEMAPI.
         <div className="grille" style={{ marginTop: "0.75rem" }}>
           <div className="champ">
             <label htmlFor="degrevement">Taux de dégrèvement preneur (%)</label>
@@ -174,8 +176,8 @@ export function TaxeFonciere({ etat }: { etat: EtatTaxeFonciere }) {
           <div className="taxe-bloc" key={ligne.id}>
             <div className="taxe-bloc-titre">
               <span>{ligne.libelle}</span>
-              <span className={`badge ${ligne.methode === "tfnb" ? "conforme" : "inferieur"}`}>
-                {ligne.methode === "tfnb" ? "Base dégrevée · réforme 2025" : "taxe annexe"}
+              <span className={`badge ${ligne.assietteDegrevee ? "conforme" : "inferieur"}`}>
+                {ligne.assietteDegrevee ? "Base dégrevée · réforme 2025" : "taxe annexe"}
               </span>
             </div>
 
@@ -304,6 +306,17 @@ export function TaxeFonciere({ etat }: { etat: EtatTaxeFonciere }) {
               </div>
             </div>
 
+            <p className="intro" style={{ fontSize: "0.8rem", margin: "0 0 0.4rem" }}>
+              {formuleMontantTotal(ligne)}
+              {ligne.modeAssiette === "montantGlobal" && ligne.methode === "tfnb" && (
+                <>
+                  {" "}— la répartition ci-dessous applique quand même le
+                  coefficient correcteur ({coefficient}) au montant total, pour
+                  reconstituer la taxe théorique avant dégrèvement.
+                </>
+              )}
+            </p>
+
             <div className="taxe-resultat">
               <span>
                 Montant total : <strong>{formaterEuros(res.montantTotal)}</strong>
@@ -348,9 +361,9 @@ export function TaxeFonciere({ etat }: { etat: EtatTaxeFonciere }) {
       <details className="explication">
         <summary>Comment ce calcul fonctionne-t-il&nbsp;?</summary>
         <p>
-          <strong>1. L'assiette</strong> (montant de taxe concernant la
-          surface louée) peut se calculer de trois façons, au choix sur
-          chaque ligne :
+          <strong>1. L'assiette / Revenu cadastral propre à l'exploitant</strong>{" "}
+          (montant de taxe concernant la surface louée) peut se calculer de
+          trois façons, au choix sur chaque ligne :
         </p>
         <ul>
           <li>
@@ -360,10 +373,11 @@ export function TaxeFonciere({ etat }: { etat: EtatTaxeFonciere }) {
           </li>
           <li>
             <strong>Revenu cadastral propre à l'exploitant</strong> : revenu
-            cadastral de l'exploitant (dégrevé de 30 % pour la TFNB et la taxe
-            GEMAPI, non dégrevé pour la chambre d'agriculture) × taux voté.
-            Méthode recommandée dès qu'il y a plusieurs exploitants sur le
-            même avis.
+            cadastral particulier des parcelles louées à l'exploitant dont il
+            s'agit (non dégrevé), dégrevé de 30 % dans le calcul pour la TFNB
+            et la taxe GEMAPI, non dégrevé pour la chambre d'agriculture,
+            puis multiplié par le taux voté. Méthode recommandée dès qu'il y
+            a plusieurs exploitants sur le même avis.
           </li>
           <li>
             <strong>Taux à l'hectare × surface louée</strong> : pour les taxes
@@ -371,22 +385,23 @@ export function TaxeFonciere({ etat }: { etat: EtatTaxeFonciere }) {
             syndicales / de marais), suivant le protocole départemental.
           </li>
         </ul>
+        <p style={{ fontSize: "0.85rem" }}>
+          Formule du « Montant total » propre à chaque taxe (TFNB part
+          communale, TFNB part intercommunale, frais de chambre
+          d'agriculture, taxe GEMAPI, taxe de remembrement, taxes syndicales
+          ou de marais) : voir la ligne affichée sous chaque bloc de taxe
+          ci-dessus, qui s'adapte au mode choisi.
+        </p>
         <p>
           <strong>2. La répartition</strong> entre preneur et bailleur, une
           fois l'assiette connue :
         </p>
         <p className="formule">
-          TFNB (parts communale et intercommunale) et taxe GEMAPI — méthode
-          de la réforme 2025 :<br />
-          Imputé au preneur = Montant total × (Taux du bail − Taux de
-          dégrèvement) × Coefficient correcteur × (1 + frais de rôle si Taux du
-          bail &gt; dégrèvement)
-        </p>
-        <p style={{ fontSize: "0.85rem" }}>
-          La taxe GEMAPI est une taxe additionnelle à la TFNB, assise sur la
-          même base et bénéficiant du même dégrèvement de 30 % : elle suit
-          donc la même formule de reconstruction, et non celle des « autres
-          taxes » ci-dessous.
+          TFNB (parts communale et intercommunale) — méthode de la réforme
+          2025 :<br />
+          Imputé au preneur = Revenu cadastral de l'exploitant × (Taux du
+          bail − 30 %) × Coefficient correcteur × (1 + frais de rôle si Taux
+          du bail &gt; dégrèvement)
         </p>
         <ul>
           <li>
@@ -402,10 +417,25 @@ export function TaxeFonciere({ etat }: { etat: EtatTaxeFonciere }) {
             bailleur, majoré des frais de rôle.
           </li>
         </ul>
+        <p className="formule">
+          Taxe GEMAPI — méthode de la réforme 2025 :<br />
+          Imputé au preneur = Revenu cadastral de l'exploitant × 70 % × Taux
+          du bail × (1 + frais de rôle)
+        </p>
+        <p style={{ fontSize: "0.85rem" }}>
+          La base cadastrale brute est réduite à 70 % car l'administration
+          fiscale calcule elle-même la taxe GEMAPI sur une base déjà
+          dégrevée (sans quoi le calcul porterait sur une base supérieure à
+          l'impôt réel). En revanche, n'ayant pas le caractère d'une taxe
+          foncière, la taxe GEMAPI ne bénéficie pas elle-même, lors de la{" "}
+          <em>répartition</em>, du mécanisme de dégrèvement de 30 % en faveur
+          du preneur : elle suit donc la formule « simple » ci-dessous, et
+          non celle de la TFNB.
+        </p>
         <p>
           <strong>Autres taxes</strong> (chambre d'agriculture, remembrement,
-          taxes syndicales…), non concernées par la formule de dégrèvement
-          ci-dessus :
+          taxes syndicales…) et taxe GEMAPI, non concernées par la formule
+          de dégrèvement de la TFNB ci-dessus :
         </p>
         <p className="formule">
           Imputé au preneur = Montant total × Taux du bail × (1 + frais de rôle)
