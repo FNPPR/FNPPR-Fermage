@@ -137,6 +137,20 @@ deployment → Source : GitHub Actions**. Le site sera alors disponible sur
 `https://<utilisateur>.github.io/FNPPR-Fermage/`. La configuration Vite utilise
 un `base` relatif, compatible avec un hébergement en sous-répertoire.
 
+### Ancienne version conservée
+
+La version en ligne jusqu'au 27 octobre 2026 (avant la fiabilisation du
+calcul des taxes foncières) est conservée par précaution :
+
+- **en ligne**, à l'adresse `…/FNPPR-Fermage/ancienne-version/`, avec un
+  bandeau qui la signale et renvoie à la version actuelle. Il s'agit de sa
+  version compilée, rangée dans `public/ancienne-version/` (Vite recopie ce
+  dossier tel quel dans le site publié). Pour la retirer, supprimer ce dossier ;
+- **dans Git**, sur la branche `claude/ancienne-version-2026-10-27` (commit
+  `fed3ad6`). Pour revenir entièrement à cette version, annuler la fusion de
+  la demande n° 23 (bouton « Revert » sur GitHub) : le site est republié
+  automatiquement.
+
 ## Développement
 
 Prérequis : Node.js 18+.
