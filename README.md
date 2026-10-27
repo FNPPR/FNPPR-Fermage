@@ -18,24 +18,49 @@ hébergé sur n'importe quel hébergement statique (GitHub Pages, Netlify…).
 4. **Répartition des taxes foncières et assimilées** — répartit entre preneur et bailleur la TFNB (parts
    communale et intercommunale, avec le dégrèvement 2025), les frais de
    chambre d'agriculture, la taxe GEMAPI, la taxe de remembrement et les
-   taxes syndicales / de marais. Trois méthodes de calcul de l'assiette sont
-   proposées ligne par ligne :
-   - **montant global de l'avis + % de surface** — approximation simple pour
-     un exploitant unique ;
-   - **revenu cadastral propre à l'exploitant** — méthode recommandée dès
-     qu'un même avis d'imposition est partagé entre plusieurs exploitants,
-     car une répartition au seul prorata de surface peut s'écarter
-     sensiblement des revenus cadastraux réels de chacun. Un petit outil
-     intégré aide à actualiser un revenu cadastral ancien selon le taux
-     d'évolution des bases ;
+   taxes syndicales / de marais, exploitant par exploitant. Méthodes de
+   calcul de l'assiette, au choix ligne par ligne :
+   - **revenu cadastral de l'exploitant × taux voté** — méthode de référence
+     (« méthode rigoureuse » de la matrice FNPPR), proposée par défaut pour
+     la TFNB, la chambre d'agriculture et la GEMAPI. Indispensable dès qu'un
+     même avis d'imposition est partagé entre plusieurs exploitants, car une
+     répartition au seul prorata de surface peut s'écarter sensiblement des
+     revenus cadastraux réels de chacun. Le revenu cadastral (celui du
+     relevé de propriété, non minoré de 30 %) est saisi **une seule fois**
+     pour toutes les lignes ; un petit outil l'actualise d'une année sur
+     l'autre (coefficient de revalorisation des bases : 1,008 en 2026) ;
+   - **montant global de l'avis × % de surface** — approximation, fiable
+     seulement pour un exploitant unique ;
    - **taux à l'hectare × surface louée** — pour les taxes assises
      directement sur la surface (remembrement, taxes syndicales / de marais).
 
-   La taxe GEMAPI est une taxe additionnelle à la TFNB, assise sur la même
-   base et bénéficiant du même dégrèvement de 30 % : sa répartition suit donc
-   la même formule de reconstruction que la TFNB (méthode « tfnb »), et non
-   la formule « simple » des autres taxes annexes (chambre d'agriculture,
-   remembrement, taxes syndicales).
+   Garanties d'exactitude :
+   - TFNB : la taxe avant dégrèvement est calculée directement (revenu
+     cadastral × taux voté) ou, en méthode « montant global », par division
+     par (1 − dégrèvement) : le coefficient correcteur est **déduit du taux de
+     dégrèvement** (1 ÷ 0,70 ≈ 1,4286) et non plus saisi à part, ce qui
+     supprime l'écart de 0,1 % de la valeur arrondie 1,43 ;
+   - aucun arrondi intermédiaire ; chaque montant est arrondi au centime
+     selon l'arrondi commercial d'Excel (moitié éloignée de zéro, y compris
+     pour les réductions de fermage) ; les totaux sont la somme des lignes
+     arrondies ;
+   - chambre d'agriculture : la part de 50 % (art. 1604 du CGI, art. L514-1
+     du Code rural) est fixe et non modifiable ;
+   - un **détail des calculs** imprimable montre, pour chaque taxe, la
+     formule et les valeurs saisies ; refait à la calculatrice, chaque calcul
+     redonne exactement le montant retenu (vérifié par un test sur 2 000 cas) ;
+   - un **exemple de référence** (matrice FNPPR 2026, deux communes, trois
+     preneurs, données anonymisées) est rejoué à chaque modification par les
+     tests automatiques (`src/lib/taxeFonciereLignes.test.ts`).
+
+   La taxe GEMAPI est calculée par l'administration sur une base déjà
+   réduite à 70 % (même dégrèvement que la TFNB) : son assiette est donc
+   dégrevée. En revanche, n'ayant pas le caractère d'une taxe foncière, sa
+   répartition suit la formule « simple » des autres taxes annexes (méthode
+   « simple » : ni soustraction du taux de dégrèvement, ni coefficient
+   correcteur), et non la formule de reconstruction de la TFNB. Imposition
+   récente : l'application rappelle de vérifier que le bail prévoit bien son
+   remboursement.
 5. **Appel de fermage** — compose le décompte final à adresser au preneur.
    Entièrement relié aux deux modules précédents (état partagé via
    `App.tsx`, sans aucune ressaisie) :
@@ -111,6 +136,20 @@ Pour l'activer : dans les réglages du dépôt, **Settings → Pages → Build a
 deployment → Source : GitHub Actions**. Le site sera alors disponible sur
 `https://<utilisateur>.github.io/FNPPR-Fermage/`. La configuration Vite utilise
 un `base` relatif, compatible avec un hébergement en sous-répertoire.
+
+### Ancienne version conservée
+
+La version en ligne jusqu'au 27 octobre 2026 (avant la fiabilisation du
+calcul des taxes foncières) est conservée par précaution :
+
+- **en ligne**, à l'adresse `…/FNPPR-Fermage/ancienne-version/`, avec un
+  bandeau qui la signale et renvoie à la version actuelle. Il s'agit de sa
+  version compilée, rangée dans `public/ancienne-version/` (Vite recopie ce
+  dossier tel quel dans le site publié). Pour la retirer, supprimer ce dossier ;
+- **dans Git**, sur la branche `claude/ancienne-version-2026-10-27` (commit
+  `fed3ad6`). Pour revenir entièrement à cette version, annuler la fusion de
+  la demande n° 23 (bouton « Revert » sur GitHub) : le site est republié
+  automatiquement.
 
 ## Développement
 

@@ -9,7 +9,15 @@
 import { indicePourAnnee } from "../data/indices";
 
 /**
- * Arrondit un nombre à `decimales` chiffres après la virgule.
+ * Arrondit un nombre à `decimales` chiffres après la virgule, selon l'arrondi
+ * commercial (la moitié est arrondie en s'éloignant de zéro), comme la
+ * fonction ARRONDI d'Excel : 2,345 → 2,35 et −41,585 → −41,59. Le résultat
+ * est donc identique à celui d'un tableur, y compris pour les montants
+ * négatifs (réductions de fermage).
+ *
+ * Le décalage décimal passe par `toPrecision(15)` pour neutraliser les
+ * imprécisions de la représentation binaire (1,005 × 100 = 100,4999… en
+ * machine) : 1,005 est bien arrondi à 1,01.
  *
  * Normalise le résultat à `0` (et non `-0`) : un écart de calcul infime,
  * inévitable en arithmétique flottante, peut produire un `-0` mathématiquement
@@ -17,8 +25,10 @@ import { indicePourAnnee } from "../data/indices";
  * formaté — trompeur pour un montant censé être rigoureusement nul.
  */
 export function arrondir(valeur: number, decimales = 2): number {
+  if (!Number.isFinite(valeur)) return valeur;
   const facteur = 10 ** decimales;
-  const arrondi = Math.round((valeur + Number.EPSILON) * facteur) / facteur;
+  const decale = Number((Math.abs(valeur) * facteur).toPrecision(15));
+  const arrondi = (Math.sign(valeur) * Math.round(decale)) / facteur;
   return arrondi === 0 ? 0 : arrondi;
 }
 

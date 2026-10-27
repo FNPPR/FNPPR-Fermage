@@ -4,7 +4,7 @@ import { calculerToutesLesLignes } from "../lib/taxeFonciereLignes";
 import { ANNEE_MAX, INDICES_FERMAGE } from "../data/indices";
 import type { EtatFermageBase } from "../lib/etatFermageBase";
 import type { EtatTaxeFonciere } from "../lib/etatTaxeFonciere";
-import { formaterEuros, formaterNombre } from "../lib/format";
+import { formaterEuros, formaterNombre, parseNombre } from "../lib/format";
 import { useLocalStorageState } from "../lib/useLocalStorageState";
 
 const ANNEES = INDICES_FERMAGE.map((i) => i.annee);
@@ -35,7 +35,7 @@ function nouvelleLigne(libelle = "", montant = ""): LigneUI {
   return { id: `${prefixeLigne}-${compteurLigne}`, libelle, montant };
 }
 
-const num = (s: string) => Number(s.replace(",", ".").trim());
+const num = parseNombre;
 
 const deuxChiffres = (annee: number) => String(annee).slice(-2);
 
@@ -111,12 +111,12 @@ export function AppelFermage({
   // des taxes foncières et assimilées » (même état, partagé via App.tsx).
   const calculTaxe = useMemo(
     () =>
-      calculerToutesLesLignes(
-        taxeFonciere.lignes,
-        taxeFonciere.tauxDegrevement,
-        taxeFonciere.coefficient,
-      ),
-    [taxeFonciere.lignes, taxeFonciere.tauxDegrevement, taxeFonciere.coefficient],
+      calculerToutesLesLignes({
+        lignes: taxeFonciere.lignes,
+        tauxDegrevement: taxeFonciere.tauxDegrevement,
+        revenuCadastral: taxeFonciere.revenuCadastral,
+      }),
+    [taxeFonciere.lignes, taxeFonciere.tauxDegrevement, taxeFonciere.revenuCadastral],
   );
   const lignesAutoTaxe: LigneCharge[] =
     "resultats" in calculTaxe
@@ -410,7 +410,10 @@ export function AppelFermage({
 
         <p className="intro" style={{ margin: "1.1rem 0 0.6rem" }}>
           <strong>Charges complémentaires</strong> (facultatif) — toute autre
-          ligne non couverte ci-dessus (ex. taxe hors barème, frais divers) :
+          ligne non couverte ci-dessus (ex. taxe hors barème, frais divers).
+          Un dégrèvement obtenu par le bailleur (pertes de récoltes,
+          sécheresse…) revient au preneur (art. L411-24 du Code rural) :
+          saisissez-le en <strong>montant négatif</strong> pour le déduire.
         </p>
         {lignes.map((l) => (
           <div className="appel-ligne-saisie" key={l.id}>
