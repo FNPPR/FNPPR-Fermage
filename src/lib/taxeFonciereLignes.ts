@@ -61,7 +61,7 @@ export const LIGNES_INITIALES: LigneUI[] = [
     aideMontantAppele:
       "Imposition de la Commune : revenu cadastral dégrevé (−30 %) × taux communal (bas de colonne « Commune / Propriétés non bâties »)",
     aidePartExploitee:
-      "% de la surface louée sur la surface totale imposée au taux communal",
+      "Pourcentage de surface donnée à bail sur la surface totale imposée au taux communal",
     aideTauxImposition: "Taux communal (bas de colonne « Commune »)",
     montantAppele: "200",
     partExploitant: "100",
@@ -81,7 +81,7 @@ export const LIGNES_INITIALES: LigneUI[] = [
     aideMontantAppele:
       "Imposition de l'Intercommunalité : revenu cadastral dégrevé (−30 %) × taux intercommunal (bas de colonne « Intercommunalité / Propriétés non bâties »)",
     aidePartExploitee:
-      "% de la surface louée sur la surface totale imposée au taux intercommunal",
+      "Pourcentage de surface donnée à bail sur la surface totale imposée au taux intercommunal",
     aideTauxImposition: "Taux intercommunal (bas de colonne « Intercommunalité »)",
     montantAppele: "0",
     partExploitant: "100",
@@ -103,7 +103,7 @@ export const LIGNES_INITIALES: LigneUI[] = [
     aideMontantAppele:
       "Imposition de la Chambre d'agriculture : revenu cadastral NON dégrevé × taux de chambre d'agriculture (bas de colonne « Chambre d'agriculture / Propriétés non bâties »)",
     aidePartExploitee:
-      "% de la surface louée sur la surface totale imposée au taux de chambre d'agriculture",
+      "Pourcentage de surface donnée à bail sur la surface totale imposée au taux de chambre d'agriculture",
     aideTauxImposition:
       "Taux de chambre d'agriculture (bas de colonne « Chambre d'agriculture »)",
     montantAppele: "0",
@@ -122,11 +122,11 @@ export const LIGNES_INITIALES: LigneUI[] = [
     modeAssiette: "montantGlobal",
     assietteDegrevee: true,
     note:
-      "L'administration fiscale calcule la taxe GEMAPI sur une base déjà réduite à 70 % (même dégrèvement que la TFNB) : l'assiette est donc dégrevée comme pour la TFNB. En revanche, la taxe GEMAPI n'a pas le caractère d'une taxe foncière : sa répartition ne suit PAS la formule de reconstruction de la TFNB (pas de soustraction du taux de dégrèvement, pas de coefficient correcteur), mais la formule « simple » des autres taxes annexes. Vérifiez d'abord que le bail comporte bien une clause de remboursement de la taxe GEMAPI avant d'en imputer une part au preneur.",
+      "Vérification préalable indispensable : la taxe GEMAPI étant une imposition récente, les baux anciens ne prévoient pas nécessairement son remboursement. Assurez-vous que votre bail comporte bien une clause en ce sens avant d'en imputer une part au preneur ; à défaut, laissez le taux du bail à 0 %. Pour le calcul : l'administration fiscale calcule la taxe GEMAPI sur une base déjà réduite à 70 % (même dégrèvement que la TFNB), l'assiette est donc dégrevée comme pour la TFNB. En revanche, la taxe GEMAPI n'a pas le caractère d'une taxe foncière : sa répartition ne suit PAS la formule de reconstruction de la TFNB (pas de soustraction du taux de dégrèvement, pas de coefficient correcteur), mais la formule « simple » des autres taxes annexes.",
     aideMontantAppele:
       "Imposition Taxe GEMAPI : revenu cadastral dégrevé (−30 %) × taux Taxe GEMAPI (bas de colonne « Taxe GEMAPI / Propriétés non bâties »)",
     aidePartExploitee:
-      "% de la surface louée sur la surface totale imposée à la taxe GEMAPI",
+      "Pourcentage de surface donnée à bail sur la surface totale imposée à la taxe GEMAPI",
     aideTauxImposition: "Taux Taxe GEMAPI (bas de colonne « Taxe GEMAPI »)",
     montantAppele: "0",
     partExploitant: "100",
@@ -148,7 +148,7 @@ export const LIGNES_INITIALES: LigneUI[] = [
     aideMontantAppele:
       "Imposition Taxe de remembrement : taux à l'hectare × surface louée, suivant le partage contractuellement défini (protocole départemental)",
     aidePartExploitee:
-      "% de la surface louée sur la surface totale imposée à la taxe de remembrement",
+      "Pourcentage de surface donnée à bail sur la surface totale imposée à la taxe de remembrement",
     aideTauxImposition: "Taux à l'hectare fixé par le protocole départemental",
     montantAppele: "0",
     partExploitant: "100",
@@ -170,7 +170,7 @@ export const LIGNES_INITIALES: LigneUI[] = [
     aideMontantAppele:
       "Imposition de l'association syndicale (marais, drainage…) : taux ou cotisation à l'hectare × surface louée",
     aidePartExploitee:
-      "% de la surface louée sur la surface totale imposée par l'association syndicale",
+      "Pourcentage de surface donnée à bail sur la surface totale imposée par l'association syndicale",
     aideTauxImposition: "Taux ou cotisation à l'hectare de l'association syndicale",
     montantAppele: "0",
     partExploitant: "100",

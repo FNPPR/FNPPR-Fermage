@@ -31,11 +31,14 @@ hébergé sur n'importe quel hébergement statique (GitHub Pages, Netlify…).
    - **taux à l'hectare × surface louée** — pour les taxes assises
      directement sur la surface (remembrement, taxes syndicales / de marais).
 
-   La taxe GEMAPI est une taxe additionnelle à la TFNB, assise sur la même
-   base et bénéficiant du même dégrèvement de 30 % : sa répartition suit donc
-   la même formule de reconstruction que la TFNB (méthode « tfnb »), et non
-   la formule « simple » des autres taxes annexes (chambre d'agriculture,
-   remembrement, taxes syndicales).
+   La taxe GEMAPI est calculée par l'administration sur une base déjà
+   réduite à 70 % (même dégrèvement que la TFNB) : son assiette est donc
+   dégrevée. En revanche, n'ayant pas le caractère d'une taxe foncière, sa
+   répartition suit la formule « simple » des autres taxes annexes (méthode
+   « simple » : ni soustraction du taux de dégrèvement, ni coefficient
+   correcteur), et non la formule de reconstruction de la TFNB. Imposition
+   récente : l'application rappelle de vérifier que le bail prévoit bien son
+   remboursement.
 5. **Appel de fermage** — compose le décompte final à adresser au preneur.
    Entièrement relié aux deux modules précédents (état partagé via
    `App.tsx`, sans aucune ressaisie) :
