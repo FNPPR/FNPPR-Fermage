@@ -19,6 +19,13 @@ describe("arrondir", () => {
     expect(arrondir(1.23456, 0)).toBe(1);
   });
 
+  it("arrondit les montants négatifs comme Excel (la moitié s'éloigne de zéro)", () => {
+    expect(arrondir(-41.585)).toBe(-41.59);
+    expect(arrondir(-2.345)).toBe(-2.35);
+    expect(arrondir(-1.005)).toBe(-1.01);
+    expect(arrondir(-10.004)).toBe(-10);
+  });
+
   it("normalise -0 en 0 (jamais « -0,00 € » à l'affichage)", () => {
     expect(arrondir(-0)).toBe(0);
     expect(Object.is(arrondir(-0), -0)).toBe(false);

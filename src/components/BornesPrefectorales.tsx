@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { controleBornesPrefectorales } from "../lib/fermage";
-import { formaterEuros, formaterNombre } from "../lib/format";
+import { formaterEuros, formaterNombre, parseNombre } from "../lib/format";
 import {
   DEPARTEMENTS,
   BAREMES_VERIFIES,
@@ -51,10 +51,10 @@ export function BornesPrefectorales() {
   }
 
   const calcul = useMemo(() => {
-    const s = Number(surface.replace(",", "."));
-    const min = Number(minHa.replace(",", "."));
-    const max = Number(maxHa.replace(",", "."));
-    const l = Number(loyer.replace(",", "."));
+    const s = parseNombre(surface);
+    const min = parseNombre(minHa);
+    const max = parseNombre(maxHa);
+    const l = parseNombre(loyer);
     if ([s, min, max, l].some((n) => Number.isNaN(n))) {
       return { erreur: "Renseignez des valeurs numériques valides." };
     }

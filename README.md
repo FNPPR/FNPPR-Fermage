@@ -18,18 +18,40 @@ hébergé sur n'importe quel hébergement statique (GitHub Pages, Netlify…).
 4. **Répartition des taxes foncières et assimilées** — répartit entre preneur et bailleur la TFNB (parts
    communale et intercommunale, avec le dégrèvement 2025), les frais de
    chambre d'agriculture, la taxe GEMAPI, la taxe de remembrement et les
-   taxes syndicales / de marais. Trois méthodes de calcul de l'assiette sont
-   proposées ligne par ligne :
-   - **montant global de l'avis + % de surface** — approximation simple pour
-     un exploitant unique ;
-   - **revenu cadastral propre à l'exploitant** — méthode recommandée dès
-     qu'un même avis d'imposition est partagé entre plusieurs exploitants,
-     car une répartition au seul prorata de surface peut s'écarter
-     sensiblement des revenus cadastraux réels de chacun. Un petit outil
-     intégré aide à actualiser un revenu cadastral ancien selon le taux
-     d'évolution des bases ;
+   taxes syndicales / de marais, exploitant par exploitant. Méthodes de
+   calcul de l'assiette, au choix ligne par ligne :
+   - **revenu cadastral de l'exploitant × taux voté** — méthode de référence
+     (« méthode rigoureuse » de la matrice FNPPR), proposée par défaut pour
+     la TFNB, la chambre d'agriculture et la GEMAPI. Indispensable dès qu'un
+     même avis d'imposition est partagé entre plusieurs exploitants, car une
+     répartition au seul prorata de surface peut s'écarter sensiblement des
+     revenus cadastraux réels de chacun. Le revenu cadastral (celui du
+     relevé de propriété, non minoré de 30 %) est saisi **une seule fois**
+     pour toutes les lignes ; un petit outil l'actualise d'une année sur
+     l'autre (coefficient de revalorisation des bases : 1,008 en 2026) ;
+   - **montant global de l'avis × % de surface** — approximation, fiable
+     seulement pour un exploitant unique ;
    - **taux à l'hectare × surface louée** — pour les taxes assises
      directement sur la surface (remembrement, taxes syndicales / de marais).
+
+   Garanties d'exactitude :
+   - TFNB : la taxe avant dégrèvement est calculée directement (revenu
+     cadastral × taux voté) ou, en méthode « montant global », par division
+     par (1 − dégrèvement) : le coefficient correcteur est **déduit du taux de
+     dégrèvement** (1 ÷ 0,70 ≈ 1,4286) et non plus saisi à part, ce qui
+     supprime l'écart de 0,1 % de la valeur arrondie 1,43 ;
+   - aucun arrondi intermédiaire ; chaque montant est arrondi au centime
+     selon l'arrondi commercial d'Excel (moitié éloignée de zéro, y compris
+     pour les réductions de fermage) ; les totaux sont la somme des lignes
+     arrondies ;
+   - chambre d'agriculture : la part de 50 % (art. 1604 du CGI, art. L514-1
+     du Code rural) est fixe et non modifiable ;
+   - un **détail des calculs** imprimable montre, pour chaque taxe, la
+     formule et les valeurs saisies ; refait à la calculatrice, chaque calcul
+     redonne exactement le montant retenu (vérifié par un test sur 2 000 cas) ;
+   - un **exemple de référence** (matrice FNPPR 2026, deux communes, trois
+     preneurs, données anonymisées) est rejoué à chaque modification par les
+     tests automatiques (`src/lib/taxeFonciereLignes.test.ts`).
 
    La taxe GEMAPI est calculée par l'administration sur une base déjà
    réduite à 70 % (même dégrèvement que la TFNB) : son assiette est donc

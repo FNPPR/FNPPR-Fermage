@@ -160,6 +160,10 @@ main {
 @media (max-width: 900px) {
   .layout {
     flex-direction: column;
+    /* En colonne, « flex-start » donnerait au contenu la largeur de son plus
+     * long élément (liste déroulante, courrier…) et ferait déborder la page
+     * sur téléphone : on l'étire à la largeur de l'écran. */
+    align-items: stretch;
   }
   .pub {
     position: static;
@@ -252,6 +256,8 @@ main {
 .champ input,
 .champ select,
 .champ textarea {
+  min-width: 0;
+  max-width: 100%;
   font-size: 1rem;
   padding: 0.6rem 0.7rem;
   border: 1px solid var(--gris-bord);
@@ -564,6 +570,202 @@ tbody tr.surligne td {
   color: var(--orange);
 }
 
+.note-ligne {
+  font-size: 0.85rem;
+  margin-top: -0.4rem;
+}
+
+.note-approximation {
+  font-size: 0.85rem;
+  color: var(--orange-warning);
+  margin: 0 0 0.75rem;
+}
+
+/* Calcul chiffré sous chaque taxe */
+.taxe-calcul {
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.taxe-etape {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.taxe-etape-formule {
+  font-size: 0.8rem;
+  color: var(--gris-doux);
+}
+
+.taxe-etape-calcul {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.taxe-remarque {
+  font-size: 0.82rem;
+  color: var(--gris-doux);
+}
+
+.valeur-calculee {
+  font-size: 1rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px dashed var(--gris-bord);
+  border-radius: 7px;
+  background: var(--gris-fond);
+  color: var(--gris-texte);
+}
+
+.champ input:disabled {
+  background: var(--gris-fond);
+  color: var(--gris-doux);
+  cursor: not-allowed;
+}
+
+/* Page « Détail des calculs » (seule partie imprimée de l'onglet taxes) */
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  margin-top: 1.5rem;
+}
+
+.detail-actions .btn-imprimer,
+.detail-actions .btn-ajouter {
+  display: inline-block;
+  margin: 0;
+}
+
+.detail-actions p {
+  flex-basis: 100%;
+}
+
+.detail-page {
+  margin-top: 1rem;
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--gris-bord);
+  border-radius: var(--rayon);
+  background: var(--blanc);
+  color: var(--gris-texte);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.detail-entete {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  border-bottom: 2px solid var(--bleu);
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.8rem;
+}
+
+.detail-titre {
+  margin: 0;
+  font-weight: 700;
+  color: var(--bleu-fonce);
+  font-size: 1.02rem;
+}
+
+.detail-reference {
+  margin: 0.2rem 0 0;
+  font-weight: 600;
+}
+
+.detail-date {
+  margin: 0;
+  color: var(--gris-doux);
+  white-space: nowrap;
+}
+
+.detail-parametres {
+  margin: 0 0 1rem;
+  color: var(--gris-doux);
+}
+
+.detail-ligne {
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed var(--gris-bord);
+  break-inside: avoid;
+}
+
+.detail-ligne-titre {
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+  color: var(--bleu-fonce);
+}
+
+.detail-methode {
+  font-weight: 400;
+  color: var(--gris-doux);
+  font-size: 0.88rem;
+}
+
+.detail-etape {
+  margin-bottom: 0.35rem;
+}
+
+.detail-formule {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--gris-doux);
+}
+
+.detail-operation {
+  margin: 0 0 0 1rem;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.detail-remarque {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--gris-doux);
+}
+
+.detail-total {
+  margin-top: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--bleu-clair);
+  border-radius: 6px;
+  break-inside: avoid;
+}
+
+.detail-total p {
+  margin: 0;
+}
+
+.detail-total .detail-sens {
+  margin-top: 0.2rem;
+  font-size: 0.88rem;
+  color: var(--gris-doux);
+}
+
+.detail-pied {
+  margin: 1rem 0 0;
+  font-size: 0.78rem;
+  color: var(--gris-doux);
+}
+
+@media screen {
+  .masque-ecran {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .detail-page {
+    padding: 1rem;
+  }
+  .detail-operation {
+    margin-left: 0;
+  }
+}
+
 .explication {
   margin-top: 1.5rem;
   border: 1px solid var(--gris-bord);
@@ -618,6 +820,7 @@ tbody tr.surligne td {
 }
 
 .appel-ligne-saisie input {
+  min-width: 0;
   font-size: 0.95rem;
   padding: 0.55rem 0.65rem;
   border: 1px solid var(--gris-bord);
@@ -795,6 +998,17 @@ tbody tr.surligne td {
     padding: 0;
     border: none;
     box-shadow: none;
+  }
+  /* Onglet taxes : seule la page « Détail des calculs » s'imprime. */
+  .detail-page {
+    margin: 0;
+    padding: 0;
+    border: none;
+    font-size: 10.5pt;
+  }
+  .detail-total {
+    background: none;
+    border: 1px solid var(--gris-bord);
   }
 }
 

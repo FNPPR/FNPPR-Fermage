@@ -9,6 +9,7 @@ import {
   formaterEuros,
   formaterNombre,
   formaterPourcentage,
+  parseNombre,
 } from "../lib/format";
 
 const ANNEES = INDICES_FERMAGE.map((i) => i.annee);
@@ -21,7 +22,7 @@ export function IndexationCalculator({
   const [afficherHistorique, setAfficherHistorique] = useState(false);
 
   const calcul = useMemo(() => {
-    const montant = Number(loyer.replace(",", "."));
+    const montant = parseNombre(loyer);
     if (!loyer.trim() || Number.isNaN(montant)) {
       return { erreur: "Saisissez un montant de loyer valide." };
     }
