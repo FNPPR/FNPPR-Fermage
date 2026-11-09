@@ -3,6 +3,7 @@ import { nomAffiche } from "../lib/dossier";
 import {
   LIBELLES_TAXES,
   taxesUtiles,
+  totalTaxe,
   type GroupeCommune,
   type ResultatBail,
   type ResultatDossier,
@@ -105,11 +106,7 @@ function TableauCommune({ groupe }: { groupe: GroupeCommune }) {
                 ))}
                 {plusieurs && (
                   <td className="nombre">
-                    <Montant
-                      valeur={Math.round(
-                        baux.reduce((s, b) => s + (b.taxes.find((t) => t.id === id)?.impute ?? 0), 0) * 100,
-                      ) / 100}
-                    />
+                    <Montant valeur={totalTaxe(baux, id)} />
                   </td>
                 )}
               </tr>

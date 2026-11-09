@@ -118,6 +118,6 @@ export function dossierExemple(): Dossier {
       }),
     ],
     lieuCourrier: "Commune A",
-    dateCourrier: "2026-11-09",
+    dateCourrier: "", // date du jour
   };
 }
