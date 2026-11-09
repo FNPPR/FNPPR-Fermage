@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { IndexationCalculator } from "./components/IndexationCalculator";
 import { BornesPrefectorales } from "./components/BornesPrefectorales";
 import { TaxeFonciere } from "./components/TaxeFonciere";
 import { AppelFermage } from "./components/AppelFermage";
 import { IndicesTable } from "./components/IndicesTable";
 import { RevueAd } from "./components/RevueAd";
+import { RenseignementsGeneraux } from "./components/RenseignementsGeneraux";
 import { ANNEE_MAX } from "./data/indices";
 import { useEtatFermageBase } from "./lib/etatFermageBase";
 import { useEtatTaxeFonciere } from "./lib/etatTaxeFonciere";
+import { useEtatDossier } from "./lib/etatDossier";
+import { calculerDossier } from "./lib/calculDossier";
 import logoUrl from "./assets/logo-fnppr.jpg";
 
 const FNPPR = {
@@ -18,9 +21,10 @@ const FNPPR = {
   youtube: "https://www.youtube.com/channel/UCFz3OZlSKkXUpyieafRTqDg",
 };
 
-type Onglet = "indexation" | "bornes" | "taxe" | "appel" | "indices";
+type Onglet = "dossier" | "indexation" | "bornes" | "taxe" | "appel" | "indices";
 
 const ONGLETS: { id: Onglet; libelle: string }[] = [
+  { id: "dossier", libelle: "Renseignements généraux" },
   { id: "indexation", libelle: "Réévaluation" },
   { id: "bornes", libelle: "Minimas et Maximas" },
   { id: "taxe", libelle: "Répartition des taxes foncières et assimilées" },
@@ -29,7 +33,9 @@ const ONGLETS: { id: Onglet; libelle: string }[] = [
 ];
 
 export function App() {
-  const [onglet, setOnglet] = useState<Onglet>("indexation");
+  const [onglet, setOnglet] = useState<Onglet>("dossier");
+  const etatDossier = useEtatDossier();
+  const resultatDossier = useMemo(() => calculerDossier(etatDossier.dossier), [etatDossier.dossier]);
   const fermageBase = useEtatFermageBase();
   const taxeFonciere = useEtatTaxeFonciere();
 
@@ -72,6 +78,9 @@ export function App() {
               ))}
             </nav>
 
+            {onglet === "dossier" && (
+              <RenseignementsGeneraux etat={etatDossier} resultat={resultatDossier} />
+            )}
             {onglet === "indexation" && (
               <IndexationCalculator fermageBase={fermageBase} />
             )}

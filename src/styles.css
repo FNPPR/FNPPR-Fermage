@@ -1067,3 +1067,205 @@ tbody tr.surligne td {
     font-size: 1.6rem;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Version complète : fiche « Renseignements généraux »               */
+/* ------------------------------------------------------------------ */
+
+/* Cases d'une même ligne alignées, qu'elles aient ou non une aide. */
+.fiche .grille {
+  align-items: end;
+}
+
+.fiche-titre {
+  margin: 1.75rem 0 0.4rem;
+  font-size: 1.08rem;
+  color: var(--bleu-fonce);
+  padding-bottom: 0.3rem;
+  border-bottom: 2px solid var(--bleu-clair);
+}
+
+.fiche-sous-titre {
+  margin: 0.9rem 0 0.45rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--bleu);
+}
+
+.aide-bloc {
+  font-size: 0.86rem;
+  color: var(--gris-doux);
+  margin: 0.2rem 0 0.75rem;
+}
+
+.fiche-carte {
+  border: 1px solid var(--gris-bord);
+  border-radius: var(--rayon);
+  padding: 1rem 1.1rem 1.1rem;
+  margin-bottom: 0.9rem;
+  background: var(--blanc);
+}
+
+.fiche-sous-carte {
+  border: 1px solid #cdddee;
+  border-left: 4px solid var(--bleu-accent);
+  border-radius: 8px;
+  padding: 0.85rem 1rem 1rem;
+  margin-top: 1rem;
+  background: #f7fafd;
+}
+
+.fiche-carte-titre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+  font-weight: 700;
+  color: var(--bleu-fonce);
+  margin-bottom: 0.75rem;
+}
+
+.fiche-details {
+  margin-top: 0.9rem;
+}
+
+.fiche-details summary {
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--bleu);
+  margin-bottom: 0.6rem;
+}
+
+.btn-lien {
+  border: none;
+  background: none;
+  padding: 0.2rem 0;
+  color: var(--bleu);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.btn-danger {
+  border: 1px solid var(--rouge);
+  background: #fdecea;
+  color: var(--rouge);
+  border-radius: 7px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.confirmation {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.confirmation-bloc {
+  margin: 0.6rem 0 0;
+  padding: 0.6rem 0.8rem;
+  background: #fff6e6;
+  border-left: 4px solid var(--orange-warning);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.dossier-barre {
+  padding: 0.85rem 1rem;
+  background: var(--gris-fond);
+  border-radius: var(--rayon);
+  margin-bottom: 0.5rem;
+}
+
+.dossier-boutons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.dossier-boutons .btn-ajouter {
+  margin-bottom: 0;
+}
+
+.dossier-barre .aide-bloc {
+  margin: 0.6rem 0 0;
+}
+
+.message-ok {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  color: #1d6b3a;
+}
+
+.problemes {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  font-size: 0.86rem;
+}
+
+.problemes li {
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  margin-top: 0.3rem;
+}
+
+.probleme-erreur {
+  background: #fdecea;
+  color: var(--rouge);
+}
+
+.probleme-avertissement {
+  background: #fff6e6;
+  color: #7a4b00;
+}
+
+.ajout-bail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gris-texte);
+}
+
+.ajout-bail select {
+  font-size: 0.95rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--gris-bord);
+  border-radius: 7px;
+  background: var(--blanc);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ajout-bail .btn-ajouter {
+  margin-bottom: 0;
+}
+
+.dossier-suite {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 0.9rem;
+  margin-top: 1rem;
+}
+
+.dossier-suite .btn-imprimer {
+  display: inline-block;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .fiche-carte,
+  .fiche-sous-carte {
+    padding: 0.8rem;
+  }
+}
