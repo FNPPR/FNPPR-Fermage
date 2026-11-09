@@ -1,14 +1,15 @@
 import { useMemo, useState } from "react";
 import { IndexationCalculator } from "./components/IndexationCalculator";
 import { BornesPrefectorales } from "./components/BornesPrefectorales";
-import { TaxeFonciere } from "./components/TaxeFonciere";
-import { AppelFermage } from "./components/AppelFermage";
+import { TaxesDossier } from "./components/TaxesDossier";
+import { AppelsFermage } from "./components/AppelsFermage";
+import { Recapitulatif } from "./components/Recapitulatif";
+import { ReevaluationDossier } from "./components/ReevaluationDossier";
 import { IndicesTable } from "./components/IndicesTable";
 import { RevueAd } from "./components/RevueAd";
 import { RenseignementsGeneraux } from "./components/RenseignementsGeneraux";
 import { ANNEE_MAX } from "./data/indices";
 import { useEtatFermageBase } from "./lib/etatFermageBase";
-import { useEtatTaxeFonciere } from "./lib/etatTaxeFonciere";
 import { useEtatDossier } from "./lib/etatDossier";
 import { calculerDossier } from "./lib/calculDossier";
 import logoUrl from "./assets/logo-fnppr.jpg";
@@ -21,14 +22,15 @@ const FNPPR = {
   youtube: "https://www.youtube.com/channel/UCFz3OZlSKkXUpyieafRTqDg",
 };
 
-type Onglet = "dossier" | "indexation" | "bornes" | "taxe" | "appel" | "indices";
+type Onglet = "dossier" | "indexation" | "bornes" | "taxe" | "appel" | "recap" | "indices";
 
 const ONGLETS: { id: Onglet; libelle: string }[] = [
   { id: "dossier", libelle: "Renseignements généraux" },
   { id: "indexation", libelle: "Réévaluation" },
   { id: "bornes", libelle: "Minimas et Maximas" },
   { id: "taxe", libelle: "Répartition des taxes foncières et assimilées" },
-  { id: "appel", libelle: "Appel de fermage" },
+  { id: "appel", libelle: "Appels de fermage" },
+  { id: "recap", libelle: "Récapitulatif" },
   { id: "indices", libelle: "Tableau des indices" },
 ];
 
@@ -36,8 +38,8 @@ export function App() {
   const [onglet, setOnglet] = useState<Onglet>("dossier");
   const etatDossier = useEtatDossier();
   const resultatDossier = useMemo(() => calculerDossier(etatDossier.dossier), [etatDossier.dossier]);
+  const allerAuDossier = () => setOnglet("dossier");
   const fermageBase = useEtatFermageBase();
-  const taxeFonciere = useEtatTaxeFonciere();
 
   return (
     <>
@@ -79,19 +81,27 @@ export function App() {
             </nav>
 
             {onglet === "dossier" && (
-              <RenseignementsGeneraux etat={etatDossier} resultat={resultatDossier} />
+              <RenseignementsGeneraux
+                etat={etatDossier}
+                resultat={resultatDossier}
+                allerA={(o) => setOnglet(o)}
+              />
             )}
             {onglet === "indexation" && (
-              <IndexationCalculator fermageBase={fermageBase} />
+              <>
+                <ReevaluationDossier resultat={resultatDossier} allerAuDossier={allerAuDossier} />
+                <IndexationCalculator fermageBase={fermageBase} />
+              </>
             )}
             {onglet === "bornes" && <BornesPrefectorales />}
-            {onglet === "taxe" && <TaxeFonciere etat={taxeFonciere} />}
+            {onglet === "taxe" && (
+              <TaxesDossier resultat={resultatDossier} allerAuDossier={allerAuDossier} />
+            )}
             {onglet === "appel" && (
-              <AppelFermage
-                fermageBase={fermageBase}
-                taxeFonciere={taxeFonciere}
-                onVoirTaxeFonciere={() => setOnglet("taxe")}
-              />
+              <AppelsFermage etat={etatDossier} resultat={resultatDossier} allerAuDossier={allerAuDossier} />
+            )}
+            {onglet === "recap" && (
+              <Recapitulatif resultat={resultatDossier} allerAuDossier={allerAuDossier} />
             )}
             {onglet === "indices" && <IndicesTable />}
           </div>

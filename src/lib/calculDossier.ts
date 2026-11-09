@@ -30,6 +30,7 @@
 import {
   type Bail,
   type Commune,
+  type Coordonnees,
   type Dossier,
   type Exploitant,
   nomCommune,
@@ -172,6 +173,9 @@ export interface Probleme {
 }
 
 export interface ResultatDossier {
+  /** Bailleur et échéance du dossier, repris tels quels pour les documents. */
+  bailleur: Coordonnees;
+  echeance: string;
   annee: number;
   anneePrecedente: number;
   indicePrecedent: number | null;
@@ -490,6 +494,8 @@ export function calculerDossier(dossier: Dossier): ResultatDossier {
   }
 
   const resultat: ResultatDossier = {
+    bailleur: dossier.bailleur,
+    echeance: dossier.echeance,
     annee,
     anneePrecedente,
     indicePrecedent,

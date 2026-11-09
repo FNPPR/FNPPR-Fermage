@@ -1269,3 +1269,254 @@ tbody tr.surligne td {
     padding: 0.8rem;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Version complète : tableaux de résultats, appels, récapitulatif    */
+/* ------------------------------------------------------------------ */
+
+.tableau-dossier {
+  width: 100%;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tableau-dossier th,
+.tableau-dossier td {
+  white-space: nowrap;
+}
+
+.tableau-dossier td:first-child,
+.tableau-dossier th:first-child {
+  white-space: normal;
+}
+
+.tableau-dossier .nombre,
+.appel-tableau .nombre {
+  text-align: right;
+}
+
+.tableau-dossier tfoot td {
+  font-weight: 700;
+  color: var(--bleu-fonce);
+  border-top: 2px solid var(--bleu-fonce);
+  background: var(--bleu-clair);
+}
+
+.tableau-dossier .ligne-info td,
+.appel-tableau .ligne-info td {
+  color: var(--gris-doux);
+  font-size: 0.86em;
+}
+
+.tableau-dossier .ligne-sous-total td {
+  font-weight: 700;
+  background: var(--gris-fond);
+}
+
+.montant-negatif {
+  color: var(--orange-warning);
+}
+
+.detail-commune + .detail-commune {
+  margin-top: 0.8rem;
+}
+
+.detail-titre-commune {
+  margin: 0.9rem 0 0.2rem;
+  font-weight: 800;
+  color: var(--bleu);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: 0.92rem;
+}
+
+.choix-presentation {
+  border: 1px solid var(--gris-bord);
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem 0.75rem;
+  margin: 0 0 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+  font-size: 0.92rem;
+}
+
+.choix-presentation legend {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--gris-texte);
+  padding: 0 0.3rem;
+}
+
+.choix-presentation label {
+  cursor: pointer;
+}
+
+/* Appel de fermage : tableau du décompte */
+.appel-lettre + .appel-lettre {
+  margin-top: 1.5rem;
+}
+
+.appel-tableau {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+  margin: 0.5rem 0 0;
+}
+
+.appel-tableau th,
+.appel-tableau td {
+  padding: 0.22rem 0.45rem;
+  border: none;
+  background: none;
+}
+
+.appel-tableau thead th {
+  color: var(--bleu-fonce);
+  font-weight: 700;
+  border-bottom: 1px solid var(--gris-bord);
+  white-space: nowrap;
+}
+
+.appel-tableau td:first-child {
+  font-weight: 400;
+  color: inherit;
+}
+
+.appel-tableau tbody tr:hover {
+  background: none;
+}
+
+.appel-tableau .nombre {
+  white-space: nowrap;
+}
+
+.appel-tableau .appel-section td {
+  padding-top: 0.75rem;
+  font-weight: 700;
+  color: var(--bleu-fonce);
+  text-decoration: underline;
+}
+
+.appel-tableau .appel-sous-total-ligne td {
+  font-weight: 700;
+  border-top: 1px dashed var(--gris-bord);
+}
+
+.appel-tableau .appel-total-ligne td {
+  font-weight: 800;
+  font-size: 1.04rem;
+  color: var(--bleu-fonce);
+  border-top: 2px solid var(--bleu-fonce);
+  padding-top: 0.45rem;
+}
+
+.appel-nota {
+  margin-top: 1.2rem !important;
+  font-size: 0.86rem;
+  color: var(--gris-doux);
+}
+
+/* Récapitulatif */
+.recap-document {
+  margin-top: 1rem;
+}
+
+.recap-sous-titre {
+  margin: 1rem 0 0.4rem;
+  font-weight: 700;
+  color: var(--bleu);
+  break-after: avoid;
+}
+
+.tableau-recap td:first-child {
+  min-width: 8.5rem;
+}
+
+.appel-tableau-conteneur {
+  overflow-x: auto;
+}
+
+@media (max-width: 600px) {
+  .appel-lettre {
+    padding: 1rem;
+  }
+  .appel-tableau {
+    font-size: 0.82rem;
+  }
+}
+
+@media print {
+  .appel-lettre {
+    margin: 0;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    break-after: page;
+    font-size: 10pt;
+    line-height: 1.4;
+  }
+  .appel-lettre p {
+    margin: 0 0 0.55rem;
+  }
+  .appel-lettre .appel-entete {
+    margin-bottom: 1rem;
+  }
+  .appel-lettre .appel-objet {
+    margin-bottom: 0.7rem !important;
+  }
+  .appel-lettre .appel-signature {
+    margin-top: 0.9rem !important;
+  }
+  .appel-tableau {
+    font-size: 9.5pt;
+  }
+  .appel-tableau th,
+  .appel-tableau td {
+    padding: 0.1rem 0.4rem;
+  }
+  .appel-tableau .appel-section td {
+    padding-top: 0.45rem;
+  }
+  .appel-tableau-conteneur {
+    overflow: visible;
+  }
+  .appel-lettre:last-of-type {
+    break-after: auto;
+  }
+  .appel-lettre + .appel-lettre {
+    margin-top: 0;
+  }
+  .appel-tableau tr,
+  .tableau-dossier tr {
+    break-inside: avoid;
+  }
+  .tableau-scroll {
+    overflow: visible;
+    max-height: none;
+    border: none;
+  }
+  .recap-document {
+    margin: 0;
+    font-size: 9.5pt;
+  }
+  .tableau-dossier {
+    font-size: 8.5pt;
+  }
+  .tableau-dossier tfoot td,
+  .tableau-dossier .ligne-sous-total td {
+    background: none;
+  }
+}
+
+/* Tableaux du dossier : défilement horizontal seulement, jamais coupés en hauteur. */
+.tableau-libre {
+  max-height: none;
+}
+
+/* Impression au format A4 (le récapitulatif passe en paysage sur son onglet). */
+@page {
+  size: A4;
+  margin: 14mm 15mm;
+}

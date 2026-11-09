@@ -276,3 +276,58 @@ describe("erreurs et avertissements de saisie", () => {
     expect(r.problemes.map((p) => p.ou)).toEqual(["Exploitant 2", "Commune 2"]);
   });
 });
+
+/**
+ * Second exemple de référence : matrice FNPPR d'octobre 2026 (corrigée le
+ * 27 octobre), 2 communes × 3 exploitants, frais de rôle 3 % et 8 %.
+ * Montants attendus recalculés en décimal exact (voir la note aux testeurs du
+ * 27 octobre 2026) ; ordre : communale, intercommunale, chambre, GEMAPI.
+ */
+describe("exemple de référence — matrice FNPPR d'octobre 2026", () => {
+  const d = nouveauDossier(2026);
+  const communes = [
+    { id: "c1", taux: ["43,89", "3,25", "15,01", "2,38"] },
+    { id: "c2", taux: ["42,89", "3,25", "15,1", "2,38"] },
+  ];
+  d.communes = communes.map(({ id, taux }) => {
+    const c = nouvelleCommune(id);
+    [c.tauxCommunal, c.tauxIntercommunal, c.tauxChambre, c.tauxGemapi] = taux;
+    return c;
+  });
+  d.exploitants = ["p1", "p2", "p3"].map((id) => nouvelExploitant(id));
+  const baux: [string, string, string, string, string, string][] = [
+    // commune, exploitant, fermage 2025, revenu cadastral 2025, taux du bail, taux GEMAPI
+    ["c1", "p1", "1729,42", "940", "20", "20"],
+    ["c1", "p2", "3325", "1640", "30", "0"],
+    ["c1", "p3", "3762", "1846", "50", "30"],
+    ["c2", "p1", "732,45", "325", "20", "20"],
+    ["c2", "p2", "1350", "6103", "30", "0"],
+    ["c2", "p3", "2808", "1259", "50", "30"],
+  ];
+  d.baux = baux.map(([c, p, f, rc, tb, tg]) => {
+    const b = nouveauBail(p, c, `${c}-${p}`);
+    b.fermagePrecedent = f;
+    b.revenuCadastralPrecedent = rc;
+    b.tauxBail = tb;
+    b.tauxBailGemapi = tg;
+    b.surface = "10";
+    return b;
+  });
+  const r = calculerDossier(d);
+  const attendus: Record<string, { lignes: number[]; total: number; fermage: number }> = {
+    "c1-p1": { lignes: [-41.59, -3.08, 76.8, 3.25], total: 35.38, fermage: 1785.35 },
+    "c1-p2": { lignes: [0, 0, 133.99, 0], total: 133.99, fermage: 3432.54 },
+    "c1-p3": { lignes: [168.24, 12.46, 150.82, 9.58], total: 341.1, fermage: 3883.67 },
+    "c2-p1": { lignes: [-14.05, -1.06, 26.71, 1.12], total: 12.72, fermage: 756.14 },
+    "c2-p2": { lignes: [0, 0, 501.62, 0], total: 501.62, fermage: 1393.66 },
+    "c2-p3": { lignes: [112.13, 8.5, 103.48, 6.53], total: 230.64, fermage: 2898.82 },
+  };
+  for (const [id, a] of Object.entries(attendus)) {
+    it(`${id} : taxes ligne par ligne, total et fermage`, () => {
+      const b = bailDe(r, id);
+      expect(b.taxes.slice(0, 4).map((t) => t.impute)).toEqual(a.lignes);
+      expect(b.totalTaxes).toBe(a.total);
+      expect(b.fermage).toBe(a.fermage);
+    });
+  }
+});
