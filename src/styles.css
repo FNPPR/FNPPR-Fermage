@@ -1627,3 +1627,18 @@ tbody tr.surligne td {
     break-inside: avoid;
   }
 }
+
+/* Écrans moyens (tablette, petit portable) : récapitulatif plus compact pour
+   tenir sans défilement horizontal. */
+@media screen and (max-width: 1200px) {
+  .tableau-recap {
+    font-size: 0.75rem;
+  }
+  .tableau-recap th,
+  .tableau-recap td {
+    padding: 0.4rem 0.22rem;
+  }
+  .tableau-recap td:first-child {
+    min-width: 5.5rem;
+  }
+}

@@ -137,8 +137,11 @@ un `base` relatif, compatible avec un hébergement en sous-répertoire.
 
 ### Versions conservées
 
-- **Version du 27 octobre 2026** (un exploitant à la fois) : branche
-  `claude/version-publiee-2026-10-27` (commit `e234cbe`).
+- **Version du 27 octobre 2026** (un exploitant à la fois) : en ligne à
+  l'adresse `…/FNPPR-Fermage/version-27-octobre/` (bandeau qui la signale,
+  version compilée rangée dans `public/version-27-octobre/`) et sur la
+  branche `claude/version-publiee-2026-10-27` (commit `e234cbe`). Pour
+  retirer la copie en ligne, supprimer ce dossier.
 - **Version de septembre 2026** : en ligne à l'adresse
   `…/FNPPR-Fermage/ancienne-version/` (bandeau qui la signale, version
   compilée rangée dans `public/ancienne-version/`, que Vite recopie telle
