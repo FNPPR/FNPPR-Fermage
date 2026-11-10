@@ -1520,3 +1520,110 @@ tbody tr.surligne td {
   size: A4;
   margin: 14mm 15mm;
 }
+
+/* ------------------------------------------------------------------ */
+/* Contrôle de la fiche : cases à compléter ou erronées                */
+/* ------------------------------------------------------------------ */
+
+/* Case obligatoire laissée vide. */
+.champ input.saisie-manquante {
+  border-color: var(--orange-warning);
+  background: #fff8ec;
+}
+
+/* Saisie illisible ou hors des limites. */
+.champ input.saisie-invalide {
+  border-color: var(--rouge);
+  background: #fdecea;
+}
+
+.probleme-manquant {
+  background: #fff6e6;
+  color: #7a4b00;
+  border-left: 3px solid var(--orange-warning);
+}
+
+/* Résultats bloqués tant que la fiche n'est pas complète et juste. */
+.blocage p {
+  margin: 0 0 0.5rem;
+}
+
+.blocage .blocage-titre {
+  font-size: 0.98rem;
+}
+
+.blocage .btn-imprimer {
+  margin-top: 0.6rem;
+}
+
+.liste-problemes {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.liste-problemes li {
+  margin-top: 0.25rem;
+}
+
+.liste-problemes .btn-lien {
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.blocage .liste-problemes .btn-lien {
+  color: var(--rouge);
+}
+
+.liste-problemes-suite {
+  margin: 0.4rem 0 0 !important;
+  font-style: italic;
+}
+
+.avertissements-fiche {
+  margin-top: 0.8rem;
+  padding: 0.75rem 1rem;
+  background: #fff6e6;
+  color: #7a4b00;
+  border-left: 4px solid var(--orange-warning);
+  border-radius: 6px;
+  font-size: 0.92rem;
+}
+
+.avertissements-fiche p {
+  margin: 0;
+}
+
+.avertissements-fiche .btn-lien {
+  color: #7a4b00;
+}
+
+/* Récapitulatif : les intitulés de colonnes passent à la ligne pour que le
+   tableau tienne dans la largeur de l'écran. */
+.tableau-recap {
+  font-size: 0.86rem;
+}
+
+.tableau-recap thead th {
+  white-space: normal;
+  vertical-align: bottom;
+  line-height: 1.25;
+}
+
+.tableau-recap th,
+.tableau-recap td {
+  padding: 0.45rem 0.5rem;
+}
+
+@media print {
+  /* Les totaux ne se répètent pas en bas de chaque page : imprimés une seule
+     fois, à la fin du tableau (sinon un total général apparaîtrait sous une
+     partie seulement des lignes). */
+  .tableau-dossier tfoot,
+  .appel-tableau tfoot {
+    display: table-row-group;
+  }
+  /* Le tableau par commune, court, ne se coupe pas entre deux pages. */
+  .recap-bloc {
+    break-inside: avoid;
+  }
+}

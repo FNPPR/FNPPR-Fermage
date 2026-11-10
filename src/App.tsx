@@ -38,7 +38,12 @@ export function App() {
   const [onglet, setOnglet] = useState<Onglet>("dossier");
   const etatDossier = useEtatDossier();
   const resultatDossier = useMemo(() => calculerDossier(etatDossier.dossier), [etatDossier.dossier]);
-  const allerAuDossier = () => setOnglet("dossier");
+  // Retour à la fiche depuis un onglet de résultats, éventuellement sur la case à corriger.
+  const [champCible, setChampCible] = useState<string | null>(null);
+  const allerAuDossier = (idChamp?: string) => {
+    setOnglet("dossier");
+    setChampCible(idChamp ?? null);
+  };
   const fermageBase = useEtatFermageBase();
 
   return (
@@ -85,6 +90,8 @@ export function App() {
                 etat={etatDossier}
                 resultat={resultatDossier}
                 allerA={(o) => setOnglet(o)}
+                champCible={champCible}
+                cibleAtteinte={() => setChampCible(null)}
               />
             )}
             {onglet === "indexation" && (

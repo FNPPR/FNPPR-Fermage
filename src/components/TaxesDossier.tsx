@@ -16,12 +16,13 @@ import {
 import { parseNombre } from "../lib/format";
 import {
   AideImpression,
-  AlerteErreurs,
-  DossierVide,
   Montant,
+  ResultatsIndisponibles,
   dateEnLettres,
   nomCommuneDe,
   nomExploitantDe,
+  resultatsDisponibles,
+  type AllerAuDossier,
 } from "./communDossier";
 
 /** « −41,59 € − 3,08 € + 76,80 € = 32,13 € » (lignes non nulles). */
@@ -135,10 +136,20 @@ function TableauCommune({ groupe }: { groupe: GroupeCommune }) {
 
 function DetailBail({ b, revalorisation }: { b: ResultatBail; revalorisation: number }) {
   const lignes = b.taxes.filter((t) => t.impute !== 0 || (t.montantTotal ?? 0) !== 0);
-  // Remarques (montant négatif, frais de rôle non appliqués…) : une seule fois par terres louées.
+  // Remarques (montant négatif, frais de rôle non appliqués…) : une seule fois
+  // par terres louées, en précisant la taxe concernée (les parts communale et
+  // intercommunale partagent les mêmes remarques).
   const remarques = [
     ...new Set(
-      lignes.flatMap((t) => t.detail?.remarques ?? []).filter((r) => !r.includes("à 0 %")),
+      lignes.flatMap((t) =>
+        (t.detail?.remarques ?? [])
+          .filter((r) => !r.includes("à 0 %"))
+          .map((r) =>
+            t.id === "communale" || t.id === "intercommunale"
+              ? `Taxe foncière (parts communale et intercommunale). ${r}`
+              : `${t.libelle}. ${r}`,
+          ),
+      ),
     ),
   ];
   return (
@@ -239,9 +250,10 @@ export function TaxesDossier({
   allerAuDossier,
 }: {
   resultat: ResultatDossier;
-  allerAuDossier: () => void;
+  allerAuDossier: AllerAuDossier;
 }) {
   const [afficherDetail, setAfficherDetail] = useState(false);
+  const disponibles = resultatsDisponibles(resultat);
   return (
     <section className="card" aria-labelledby="titre-taxe">
       <div className="no-print">
@@ -260,11 +272,10 @@ export function TaxesDossier({
           exploitants se partagent un même avis d'imposition.
         </p>
 
-        {resultat.baux.length === 0 ? (
-          <DossierVide resultat={resultat} allerAuDossier={allerAuDossier} />
+        {!disponibles ? (
+          <ResultatsIndisponibles resultat={resultat} allerAuDossier={allerAuDossier} />
         ) : (
           <>
-            <AlerteErreurs resultat={resultat} allerAuDossier={allerAuDossier} />
             <p className="aide-bloc">
               Année {resultat.annee} · dégrèvement {formaterTaux(resultat.tauxDegrevement)} · revenus
               cadastraux revalorisés de {formaterTaux(resultat.revalorisation)} · montant négatif = en
@@ -289,7 +300,7 @@ export function TaxesDossier({
         )}
       </div>
 
-      {resultat.baux.length > 0 && (
+      {disponibles && (
         <>
           <div className="no-print detail-actions">
             <button

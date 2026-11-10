@@ -37,7 +37,7 @@ import {
   nomExploitant,
 } from "./dossier";
 import { arrondir, revaloriserFermage } from "./fermage";
-import { parseNombre } from "./format";
+import { formaterNombrePrecis, parseNombre, saisieVide } from "./format";
 import {
   calculerLigneTaxe,
   detaillerLigneTaxe,
@@ -167,6 +167,10 @@ export interface Probleme {
   /** Où se trouve le problème, en clair : « Commune LE LOROUX », « DURAND Jérôme – LE LOROUX ». */
   ou: string;
   message: string;
+  /** Saisie concernée : nom du champ dans le dossier, la commune ou le bail. */
+  champ?: string;
+  /** Saisie obligatoire laissée vide. */
+  manquant?: boolean;
   communeId?: string;
   exploitantId?: string;
   bailId?: string;
@@ -185,7 +189,15 @@ export interface ResultatDossier {
   /** Dégrèvement de la TFNB (fraction) et revalorisation des revenus cadastraux (fraction). */
   tauxDegrevement: number;
   revalorisation: number;
-  /** Baux calculés sans erreur, par exploitant puis par commune. */
+  /**
+   * Vrai quand la fiche ne contient aucune erreur. Dans le cas contraire,
+   * aucun résultat n'est fourni (baux, groupes et totaux vides) : un document
+   * ne peut jamais être établi à partir d'une fiche incomplète ou erronée.
+   */
+  sansErreur: boolean;
+  /** Nombre de terres louées saisies dans la fiche, calculées ou non. */
+  bauxSaisis: number;
+  /** Baux calculés, par exploitant puis par commune (vide si la fiche contient une erreur). */
   baux: ResultatBail[];
   parExploitant: GroupeExploitant[];
   parCommune: GroupeCommune[];
@@ -202,35 +214,62 @@ function ouCommune(c: Commune, rang: number): string {
   return c.nom.trim() ? `Commune ${c.nom.trim()}` : `Commune ${rang + 1}`;
 }
 
-interface Lecteur {
-  /** Lit une saisie numérique ; vide = 0. Enregistre une erreur et renvoie NaN sinon. */
-  nombre(
-    saisie: string,
-    libelle: string,
-    options?: { min?: number; max?: number; entier?: boolean },
-  ): number;
+/** Clés des saisies (champs texte) d'un objet du dossier. */
+type Saisie<T> = { [K in keyof T]: T[K] extends string ? K : never }[keyof T] & string;
+
+interface OptionsLecture {
+  min?: number;
+  max?: number;
+  entier?: boolean;
+  /** Saisie obligatoire : une case vide est une erreur. Sinon, vide = 0. */
+  requis?: boolean;
+  /** Précision ajoutée au message d'une saisie obligatoire vide. */
+  siVide?: string;
+}
+
+interface Lecteur<T> {
+  /** Lit une saisie numérique. Enregistre une erreur et renvoie NaN si elle est invalide. */
+  nombre(cle: Saisie<T>, libelle: string, options?: OptionsLecture): number;
   enErreur(): boolean;
 }
 
-function lecteur(problemes: Probleme[], contexte: Omit<Probleme, "gravite" | "message">): Lecteur {
+type Contexte = Omit<Probleme, "gravite" | "message" | "champ" | "manquant">;
+
+function lecteur<T>(objet: T, problemes: Probleme[], contexte: Contexte): Lecteur<T> {
   let erreur = false;
+  const signaler = (champ: string, message: string, manquant = false): number => {
+    erreur = true;
+    problemes.push({ gravite: "erreur", message, champ, ...(manquant ? { manquant } : {}), ...contexte });
+    return Number.NaN;
+  };
   return {
-    nombre(saisie, libelle, { min = 0, max, entier = false } = {}) {
-      const v = parseNombre(saisie);
-      let message: string | null = null;
-      if (!Number.isFinite(v)) {
-        message = `${libelle} : « ${saisie.trim()} » n'est pas un nombre.`;
-      } else if (v < min) {
-        message = `${libelle} : la valeur doit être positive.`;
-      } else if (max !== undefined && v > max) {
-        message = `${libelle} : la valeur doit être comprise entre ${min} et ${max}.`;
-      } else if (entier && !Number.isInteger(v)) {
-        message = `${libelle} : un nombre entier est attendu.`;
+    nombre(cle, libelle, { min = 0, max, entier = false, requis = false, siVide } = {}) {
+      const saisie = String(objet[cle] ?? "");
+      if (saisieVide(saisie)) {
+        return requis
+          ? signaler(cle, `${libelle} à renseigner${siVide ? ` (${siVide})` : ""}.`, true)
+          : 0;
       }
-      if (message) {
-        erreur = true;
-        problemes.push({ gravite: "erreur", message, ...contexte });
-        return Number.NaN;
+      const v = parseNombre(saisie);
+      if (!Number.isFinite(v)) {
+        return signaler(cle, `${libelle} : « ${saisie.trim()} » n'est pas un nombre.`);
+      }
+      if (v < min) {
+        return signaler(
+          cle,
+          min === 0
+            ? `${libelle} : la valeur ne peut pas être négative.`
+            : `${libelle} : la valeur doit être au moins ${formaterNombrePrecis(min)}.`,
+        );
+      }
+      if (max !== undefined && v > max) {
+        return signaler(
+          cle,
+          `${libelle} : la valeur doit être comprise entre ${formaterNombrePrecis(min)} et ${formaterNombrePrecis(max)}.`,
+        );
+      }
+      if (entier && !Number.isInteger(v)) {
+        return signaler(cle, `${libelle} : un nombre entier est attendu.`);
       }
       return v;
     },
@@ -251,27 +290,128 @@ interface ParametresCommune {
   syndicalesPart: number;
 }
 
+/**
+ * Taux votés et frais de rôle sont obligatoires (0 doit être saisi
+ * explicitement) ; remembrement et taxes syndicales sont facultatifs, mais
+ * la part du preneur devient obligatoire dès qu'un montant à l'hectare est
+ * saisi.
+ */
 function lireCommune(
   c: Commune,
   rang: number,
   problemes: Probleme[],
 ): ParametresCommune | null {
-  const l = lecteur(problemes, { ou: ouCommune(c, rang), communeId: c.id });
-  const pct = (s: string, libelle: string, max?: number) =>
-    l.nombre(s, libelle, { max }) / 100;
-  const p: ParametresCommune = {
-    communal: pct(c.tauxCommunal, "Taux communal"),
-    intercommunal: pct(c.tauxIntercommunal, "Taux intercommunal"),
-    chambre: pct(c.tauxChambre, "Taux de chambre d'agriculture"),
-    gemapi: pct(c.tauxGemapi, "Taux GEMAPI"),
-    roleTF: pct(c.fraisRoleTaxesFoncieres, "Frais de rôle des taxes foncières"),
-    roleChambre: pct(c.fraisRoleChambre, "Frais de rôle de la chambre d'agriculture"),
-    remembrementParHa: l.nombre(c.remembrementParHa, "Remembrement (€/ha)"),
-    remembrementPart: pct(c.remembrementPartPreneur, "Part du preneur (remembrement)", 100),
-    syndicalesParHa: l.nombre(c.syndicalesParHa, "Taxes syndicales (€/ha)"),
-    syndicalesPart: pct(c.syndicalesPartPreneur, "Part du preneur (taxes syndicales)", 100),
+  const l = lecteur(c, problemes, { ou: ouCommune(c, rang), communeId: c.id });
+  const pct = (cle: Saisie<Commune>, libelle: string, options: OptionsLecture = {}) =>
+    l.nombre(cle, libelle, options) / 100;
+  const communal = pct("tauxCommunal", "Taux communal", { requis: true });
+  const intercommunal = pct("tauxIntercommunal", "Taux intercommunal", {
+    requis: true,
+    siVide: "0 s'il n'y en a pas",
+  });
+  const chambre = pct("tauxChambre", "Taux de la chambre d'agriculture", { requis: true });
+  const gemapi = pct("tauxGemapi", "Taux GEMAPI", { requis: true, siVide: "0 s'il n'y en a pas" });
+  const roleTF = pct("fraisRoleTaxesFoncieres", "Frais de rôle des taxes foncières et GEMAPI", {
+    requis: true,
+  });
+  const roleChambre = pct("fraisRoleChambre", "Frais de rôle de la chambre d'agriculture", {
+    requis: true,
+  });
+  const remembrementParHa = l.nombre("remembrementParHa", "Remembrement (€/ha)");
+  const remembrementPart = pct("remembrementPartPreneur", "Part du preneur (remembrement)", {
+    max: 100,
+    requis: remembrementParHa > 0,
+  });
+  const syndicalesParHa = l.nombre("syndicalesParHa", "Taxes syndicales (€/ha)");
+  const syndicalesPart = pct("syndicalesPartPreneur", "Part du preneur (taxes syndicales)", {
+    max: 100,
+    requis: syndicalesParHa > 0,
+  });
+  if (l.enErreur()) return null;
+  return {
+    communal,
+    intercommunal,
+    chambre,
+    gemapi,
+    roleTF,
+    roleChambre,
+    remembrementParHa,
+    remembrementPart,
+    syndicalesParHa,
+    syndicalesPart,
   };
-  return l.enErreur() ? null : p;
+}
+
+/** Saisies numériques d'un bail, lues et contrôlées. */
+interface SaisiesBail {
+  surface: number;
+  fermagePrecedent: number;
+  rcPrecedent: number;
+  tauxBail: number;
+  tauxBailGemapi: number;
+  acompte: number;
+  degrevement: number;
+  secheresse: number;
+  autreDeduction: number;
+  autreTaxe: number;
+  nombreAcomptes: number;
+}
+
+/**
+ * Surface, fermage et revenu cadastral de l'an dernier, taux du bail sont
+ * obligatoires ; acompte, dégrèvement, indemnité sécheresse, autre taxe,
+ * autre déduction et nombre d'acomptes valent 0 s'ils sont laissés vides.
+ */
+function lireBail(
+  bail: Bail,
+  contexte: Contexte,
+  annee: number,
+  problemes: Probleme[],
+): SaisiesBail | null {
+  const l = lecteur(bail, problemes, contexte);
+  const s: SaisiesBail = {
+    surface: l.nombre("surface", "Surface louée", { requis: true }),
+    fermagePrecedent: l.nombre("fermagePrecedent", `Fermage ${annee - 1}`, { requis: true }),
+    rcPrecedent: l.nombre("revenuCadastralPrecedent", `Revenu cadastral ${annee - 1}`, {
+      requis: true,
+    }),
+    tauxBail:
+      l.nombre("tauxBail", "Taux du bail (taxes foncières)", { max: 100, requis: true }) / 100,
+    tauxBailGemapi:
+      l.nombre("tauxBailGemapi", "Taux du bail (GEMAPI)", {
+        max: 100,
+        requis: true,
+        siVide: "0 si le bail ne prévoit rien",
+      }) / 100,
+    acompte: l.nombre("acompteVerse", "Acompte déjà versé"),
+    degrevement: l.nombre("degrevement", "Dégrèvement"),
+    secheresse: l.nombre("secheresse", "Indemnité sécheresse"),
+    autreDeduction: l.nombre("autreDeduction", "Autre déduction"),
+    autreTaxe: l.nombre("autreTaxe", "Autre taxe"),
+    nombreAcomptes: l.nombre("nombreAcomptes", `Acomptes à prévoir en ${annee + 1}`, {
+      entier: true,
+    }),
+  };
+  if (l.enErreur()) return null;
+
+  const avertir = (champ: Saisie<Bail>, message: string) =>
+    problemes.push({ gravite: "avertissement", message, champ, ...contexte });
+  if (s.surface === 0) {
+    avertir(
+      "surface",
+      "Surface louée égale à 0 : fermage à l'hectare non calculé, remembrement et taxes syndicales à 0.",
+    );
+  }
+  if (s.fermagePrecedent === 0) {
+    avertir("fermagePrecedent", `Fermage ${annee - 1} égal à 0 : le fermage ${annee} sera nul.`);
+  }
+  if (s.rcPrecedent === 0) {
+    avertir(
+      "revenuCadastralPrecedent",
+      `Revenu cadastral ${annee - 1} égal à 0 : taxes foncières, chambre d'agriculture et GEMAPI à 0.`,
+    );
+  }
+  return s;
 }
 
 // ---------------------------------------------------------------------------
@@ -313,43 +453,25 @@ function calculerBail(
   rangExploitant: number,
   commune: Commune,
   rangCommune: number,
+  s: SaisiesBail,
   pc: ParametresCommune,
   annee: number,
   revalorisation: number,
   params: ParametresDegrevement,
-  problemes: Probleme[],
-): ResultatBail | null {
-  const ou = `${nomExploitant(exploitant, rangExploitant)} – ${nomCommune(commune, rangCommune)}`;
-  const contexte = { ou, bailId: bail.id, exploitantId: exploitant.id, communeId: commune.id };
-  const l = lecteur(problemes, contexte);
-  const surface = l.nombre(bail.surface, "Surface louée");
-  const fermagePrecedent = l.nombre(bail.fermagePrecedent, "Fermage de l'an dernier");
-  const rcPrecedent = l.nombre(bail.revenuCadastralPrecedent, "Revenu cadastral de l'an dernier");
-  const tauxBail = l.nombre(bail.tauxBail, "Taux du bail (taxes foncières)", { max: 100 }) / 100;
-  const tauxBailGemapi = l.nombre(bail.tauxBailGemapi, "Taux du bail (GEMAPI)", { max: 100 }) / 100;
-  const acompte = l.nombre(bail.acompteVerse, "Acompte versé");
-  const degrevement = l.nombre(bail.degrevement, "Dégrèvement");
-  const secheresse = l.nombre(bail.secheresse, "Indemnité sécheresse");
-  const autreTaxe = l.nombre(bail.autreTaxe, "Autre taxe");
-  const autreDeduction = l.nombre(bail.autreDeduction, "Autre déduction");
-  const nombreAcomptes = l.nombre(bail.nombreAcomptes, "Nombre d'acomptes", { entier: true });
-  if (l.enErreur()) return null;
-
-  if (rcPrecedent === 0) {
-    problemes.push({
-      gravite: "avertissement",
-      message:
-        "Revenu cadastral non renseigné : taxes foncières, chambre d'agriculture et GEMAPI à zéro.",
-      ...contexte,
-    });
-  }
-  if (fermagePrecedent === 0) {
-    problemes.push({
-      gravite: "avertissement",
-      message: "Fermage de l'an dernier non renseigné.",
-      ...contexte,
-    });
-  }
+): ResultatBail {
+  const {
+    surface,
+    fermagePrecedent,
+    rcPrecedent,
+    tauxBail,
+    tauxBailGemapi,
+    acompte,
+    degrevement,
+    secheresse,
+    autreTaxe,
+    autreDeduction,
+    nombreAcomptes,
+  } = s;
 
   const revalo = revaloriserFermage(fermagePrecedent, annee - 1, annee);
   const revenuCadastral = rcPrecedent * (1 + revalorisation);
@@ -437,7 +559,8 @@ export function totaliser(baux: ResultatBail[]): Totaux {
   const taxes = s((b) => b.totalTaxes);
   return {
     surface,
-    fermagePrecedent: s((b) => b.fermagePrecedent),
+    // Fermages de l'an dernier tels qu'affichés (au centime), même saisis avec plus de décimales.
+    fermagePrecedent: s((b) => arrondir(b.fermagePrecedent, 2)),
     fermage,
     taxes,
     deductions: s((b) => b.totalDeductions),
@@ -479,16 +602,19 @@ export function calculerDossier(dossier: Dossier): ResultatDossier {
   const indice = indicePourAnnee(annee) ?? null;
   const indicePrecedent = indicePourAnnee(anneePrecedente) ?? null;
 
-  const lg = lecteur(problemes, { ou: "Paramètres de l'année" });
-  const tauxDegrevement = lg.nombre(dossier.tauxDegrevement, "Taux de dégrèvement", { max: 99.99 }) / 100;
+  const ouAnnee = "Année de calcul";
+  const lg = lecteur(dossier, problemes, { ou: ouAnnee });
   const revalorisation =
-    lg.nombre(dossier.revalorisationRevenuCadastral, "Revalorisation des revenus cadastraux", {
+    lg.nombre("revalorisationRevenuCadastral", "Revalorisation des revenus cadastraux", {
       min: -100,
+      requis: true,
     }) / 100;
+  const tauxDegrevement =
+    lg.nombre("tauxDegrevement", "Dégrèvement de la TFNB", { max: 99.99, requis: true }) / 100;
   if (indice === null || indicePrecedent === null) {
     problemes.push({
       gravite: "erreur",
-      ou: "Paramètres de l'année",
+      ou: ouAnnee,
       message: `Indice des fermages inconnu pour ${indice === null ? annee : anneePrecedente}.`,
     });
   }
@@ -504,13 +630,17 @@ export function calculerDossier(dossier: Dossier): ResultatDossier {
       indice !== null && indicePrecedent ? indice / indicePrecedent : null,
     tauxDegrevement,
     revalorisation,
+    sansErreur: false,
+    bauxSaisis: 0,
     baux: [],
     parExploitant: [],
     parCommune: [],
     totaux: totaliser([]),
     problemes,
   };
-  if (lg.enErreur() || indice === null || indicePrecedent === null) return resultat;
+  // Toutes les saisies sont contrôlées, même si les paramètres de l'année
+  // sont en erreur, pour signaler toutes les corrections d'un coup.
+  const calculPossible = !lg.enErreur() && indice !== null && indicePrecedent !== null;
 
   const params: ParametresDegrevement = { tauxDegrevement };
   const parametresCommunes = new Map<string, ParametresCommune | null>();
@@ -518,6 +648,7 @@ export function calculerDossier(dossier: Dossier): ResultatDossier {
     parametresCommunes.set(c.id, lireCommune(c, rang, problemes));
   });
 
+  const baux: ResultatBail[] = [];
   dossier.exploitants.forEach((exploitant, rangExploitant) => {
     const sesBaux = dossier.baux.filter((b) => b.exploitantId === exploitant.id);
     if (sesBaux.length === 0) {
@@ -531,21 +662,30 @@ export function calculerDossier(dossier: Dossier): ResultatDossier {
     // Baux dans l'ordre des communes du dossier.
     dossier.communes.forEach((commune, rangCommune) => {
       for (const bail of sesBaux.filter((b) => b.communeId === commune.id)) {
+        resultat.bauxSaisis += 1;
+        const contexte: Contexte = {
+          ou: `${nomExploitant(exploitant, rangExploitant)} – ${nomCommune(commune, rangCommune)}`,
+          bailId: bail.id,
+          exploitantId: exploitant.id,
+          communeId: commune.id,
+        };
+        const saisies = lireBail(bail, contexte, annee, problemes);
         const pc = parametresCommunes.get(commune.id);
-        if (!pc) continue; // erreur déjà signalée sur la commune
-        const r = calculerBail(
-          bail,
-          exploitant,
-          rangExploitant,
-          commune,
-          rangCommune,
-          pc,
-          annee,
-          revalorisation,
-          params,
-          problemes,
+        if (!saisies || !pc || !calculPossible) continue;
+        baux.push(
+          calculerBail(
+            bail,
+            exploitant,
+            rangExploitant,
+            commune,
+            rangCommune,
+            saisies,
+            pc,
+            annee,
+            revalorisation,
+            params,
+          ),
         );
-        if (r) resultat.baux.push(r);
       }
     });
   });
@@ -561,6 +701,13 @@ export function calculerDossier(dossier: Dossier): ResultatDossier {
     }
   });
 
+  // Une seule erreur dans la fiche, et aucun résultat n'est fourni : un appel
+  // regroupant plusieurs communes ne doit jamais omettre silencieusement des
+  // terres en erreur, et rien d'incomplet ne doit pouvoir être imprimé.
+  resultat.sansErreur = !problemes.some((p) => p.gravite === "erreur");
+  if (!resultat.sansErreur) return resultat;
+
+  resultat.baux = baux;
   resultat.parExploitant = dossier.exploitants
     .map((exploitant, rang) => {
       const baux = resultat.baux.filter((b) => b.exploitant.id === exploitant.id);

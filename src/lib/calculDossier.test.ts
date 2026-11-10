@@ -145,7 +145,9 @@ function dossierSimple(modif: (d: ReturnType<typeof nouveauDossier>) => void = (
   const c = nouvelleCommune("c1");
   c.nom = "Ici";
   c.tauxCommunal = "40";
+  c.tauxIntercommunal = "0";
   c.tauxChambre = "10";
+  c.tauxGemapi = "0";
   const e = nouvelExploitant("e1");
   e.coordonnees.nom = "PRENEUR";
   const b = nouveauBail("e1", "c1", "b1");
@@ -205,23 +207,41 @@ describe("autres taxes, déductions et acomptes", () => {
     const r = calculerDossier(dossierSimple()).baux[0];
     expect(r.fermageParHa).toBeCloseTo(r.fermage / 10, 9);
     expect(r.fermageEtTaxesParHa).toBeCloseTo((r.fermage + r.totalTaxes) / 10, 9);
-    const sansSurface = calculerDossier(dossierSimple((d) => (d.baux[0].surface = ""))).baux[0];
+    const sansSurface = calculerDossier(dossierSimple((d) => (d.baux[0].surface = "0"))).baux[0];
     expect(sansSurface.fermageParHa).toBeNull();
+    expect(sansSurface.fermageEtTaxesParHa).toBeNull();
   });
 });
 
 describe("erreurs et avertissements de saisie", () => {
-  it("une valeur illisible écarte le bail et dit où elle se trouve", () => {
+  it("une valeur illisible bloque les résultats et dit où elle se trouve", () => {
     const r = calculerDossier(dossierSimple((d) => (d.baux[0].surface = "dix")));
+    expect(r.sansErreur).toBe(false);
     expect(r.baux).toHaveLength(0);
+    expect(r.bauxSaisis).toBe(1);
     expect(r.problemes).toContainEqual(
       expect.objectContaining({
         gravite: "erreur",
         ou: "PRENEUR – Ici",
         bailId: "b1",
+        champ: "surface",
         message: "Surface louée : « dix » n'est pas un nombre.",
       }),
     );
+  });
+
+  it("refuse les nombres négatifs, la notation scientifique et les séparateurs ambigus", () => {
+    for (const saisie of ["-5", "1e3", "0x10", "1.234,56", "1,234,5", "12 €uros"]) {
+      const r = calculerDossier(dossierSimple((d) => (d.baux[0].fermagePrecedent = saisie)));
+      expect(r.sansErreur, saisie).toBe(false);
+      expect(r.problemes[0]).toEqual(expect.objectContaining({ gravite: "erreur", champ: "fermagePrecedent" }));
+    }
+    // Accepté : espaces de milliers, virgule ou point, symbole recopié.
+    for (const saisie of ["1 000", "1000,00", "1000.0", "1 000 €"]) {
+      const r = calculerDossier(dossierSimple((d) => (d.baux[0].fermagePrecedent = saisie)));
+      expect(r.sansErreur, saisie).toBe(true);
+      expect(r.baux[0].fermagePrecedent).toBe(1000);
+    }
   });
 
   it("un taux du bail au-delà de 100 % est refusé", () => {
@@ -246,7 +266,9 @@ describe("erreurs et avertissements de saisie", () => {
   it("un dégrèvement illisible bloque tout le calcul", () => {
     const r = calculerDossier(dossierSimple((d) => (d.tauxDegrevement = "abc")));
     expect(r.baux).toHaveLength(0);
-    expect(r.problemes[0].ou).toBe("Paramètres de l'année");
+    expect(r.problemes[0]).toEqual(
+      expect.objectContaining({ ou: "Année de calcul", champ: "tauxDegrevement" }),
+    );
   });
 
   it("une année sans indice de l'année précédente est signalée", () => {
@@ -255,25 +277,156 @@ describe("erreurs et avertissements de saisie", () => {
     expect(r.problemes[0].message).toMatch(/Indice des fermages inconnu pour 2008/);
   });
 
-  it("avertit si le revenu cadastral ou le fermage manquent, sans bloquer", () => {
+  it("avertit d'une surface, d'un revenu cadastral ou d'un fermage à zéro, sans bloquer", () => {
     const r = calculerDossier(
       dossierSimple((d) => {
-        d.baux[0].revenuCadastralPrecedent = "";
-        d.baux[0].fermagePrecedent = "";
+        d.baux[0].surface = "0";
+        d.baux[0].revenuCadastralPrecedent = "0";
+        d.baux[0].fermagePrecedent = "0";
       }),
     );
+    expect(r.sansErreur).toBe(true);
     expect(r.baux).toHaveLength(1);
-    expect(r.problemes.map((p) => p.gravite)).toEqual(["avertissement", "avertissement"]);
+    expect(r.problemes.map((p) => [p.gravite, p.champ])).toEqual([
+      ["avertissement", "surface"],
+      ["avertissement", "fermagePrecedent"],
+      ["avertissement", "revenuCadastralPrecedent"],
+    ]);
   });
 
   it("avertit d'un exploitant sans terres et d'une commune sans exploitant", () => {
     const r = calculerDossier(
       dossierSimple((d) => {
         d.exploitants.push(nouvelExploitant("e2"));
-        d.communes.push(nouvelleCommune("c2"));
+        const c2 = nouvelleCommune("c2");
+        [c2.tauxCommunal, c2.tauxIntercommunal, c2.tauxChambre, c2.tauxGemapi] = ["30", "0", "12", "0"];
+        d.communes.push(c2);
       }),
     );
+    expect(r.sansErreur).toBe(true);
     expect(r.problemes.map((p) => p.ou)).toEqual(["Exploitant 2", "Commune 2"]);
+  });
+});
+
+describe("saisies obligatoires et absence de résultat partiel", () => {
+  it("chaque saisie obligatoire vide est signalée, avec son champ, dans l'ordre de la fiche", () => {
+    const r = calculerDossier(
+      dossierSimple((d) => {
+        d.revalorisationRevenuCadastral = "";
+        d.tauxDegrevement = " ";
+        const c = d.communes[0];
+        c.tauxCommunal = "";
+        c.tauxIntercommunal = "";
+        c.tauxChambre = "";
+        c.tauxGemapi = "";
+        c.fraisRoleTaxesFoncieres = "";
+        c.fraisRoleChambre = "%";
+        const b = d.baux[0];
+        b.surface = "";
+        b.fermagePrecedent = "";
+        b.revenuCadastralPrecedent = "€";
+        b.tauxBail = "";
+        b.tauxBailGemapi = "";
+      }),
+    );
+    expect(r.sansErreur).toBe(false);
+    expect(r.baux).toHaveLength(0);
+    expect(r.problemes.every((p) => p.gravite === "erreur" && p.manquant)).toBe(true);
+    expect(r.problemes.map((p) => p.champ)).toEqual([
+      "revalorisationRevenuCadastral",
+      "tauxDegrevement",
+      "tauxCommunal",
+      "tauxIntercommunal",
+      "tauxChambre",
+      "tauxGemapi",
+      "fraisRoleTaxesFoncieres",
+      "fraisRoleChambre",
+      "surface",
+      "fermagePrecedent",
+      "revenuCadastralPrecedent",
+      "tauxBail",
+      "tauxBailGemapi",
+    ]);
+    expect(r.problemes[5].message).toBe("Taux GEMAPI à renseigner (0 s'il n'y en a pas).");
+    expect(r.problemes[9].message).toBe("Fermage 2025 à renseigner.");
+  });
+
+  it("un zéro saisi est accepté là où une case vide est refusée", () => {
+    const r = calculerDossier(
+      dossierSimple((d) => {
+        d.communes[0].tauxGemapi = "0";
+        d.communes[0].fraisRoleTaxesFoncieres = "0";
+        d.baux[0].tauxBail = "0";
+        d.baux[0].tauxBailGemapi = "0";
+      }),
+    );
+    expect(r.sansErreur).toBe(true);
+    expect(r.baux).toHaveLength(1);
+  });
+
+  it("acompte, dégrèvement, sécheresse, autre taxe, autre déduction et nombre d'acomptes vides valent 0", () => {
+    const r = calculerDossier(dossierSimple());
+    expect(r.problemes).toEqual([]);
+    const b = r.baux[0];
+    expect(b.deductions).toEqual({ acompte: 0, degrevement: 0, secheresse: 0, autre: 0 });
+    expect(b.taxes.find((t) => t.id === "autre")?.impute).toBe(0);
+    expect(b.nombreAcomptes).toBe(0);
+  });
+
+  it("la part du preneur devient obligatoire dès qu'un montant à l'hectare est saisi", () => {
+    const r = calculerDossier(
+      dossierSimple((d) => {
+        d.communes[0].remembrementParHa = "3";
+        d.communes[0].syndicalesParHa = "12,5";
+      }),
+    );
+    expect(r.sansErreur).toBe(false);
+    expect(r.problemes.map((p) => [p.champ, p.manquant])).toEqual([
+      ["remembrementPartPreneur", true],
+      ["syndicalesPartPreneur", true],
+    ]);
+    // Sans montant à l'hectare, la part peut rester vide.
+    expect(calculerDossier(dossierSimple((d) => (d.communes[0].remembrementPartPreneur = ""))).sansErreur).toBe(true);
+  });
+
+  it("une erreur dans une commune bloque tous les résultats, y compris ceux des autres communes", () => {
+    const r = calculerDossier(
+      dossierSimple((d) => {
+        const c2 = nouvelleCommune("c2");
+        c2.nom = "Là";
+        [c2.tauxCommunal, c2.tauxIntercommunal, c2.tauxChambre] = ["30", "0", "12"]; // GEMAPI oublié
+        d.communes.push(c2);
+        const b2 = nouveauBail("e1", "c2", "b2");
+        [b2.surface, b2.fermagePrecedent, b2.revenuCadastralPrecedent] = ["5", "800", "300"];
+        d.baux.push(b2);
+      }),
+    );
+    expect(r.sansErreur).toBe(false);
+    expect(r.bauxSaisis).toBe(2);
+    expect(r.baux).toEqual([]);
+    expect(r.parExploitant).toEqual([]);
+    expect(r.parCommune).toEqual([]);
+    expect(r.totaux.fermage).toBe(0);
+    expect(r.problemes).toEqual([
+      expect.objectContaining({ ou: "Commune Là", champ: "tauxGemapi", manquant: true }),
+    ]);
+  });
+
+  it("total des fermages de l'an dernier = somme des montants au centime, même saisis avec plus de décimales", () => {
+    const r = calculerDossier(
+      dossierSimple((d) => {
+        d.baux[0].fermagePrecedent = "1000,005";
+        const c2 = nouvelleCommune("c2");
+        [c2.tauxCommunal, c2.tauxIntercommunal, c2.tauxChambre, c2.tauxGemapi] = ["30", "0", "12", "0"];
+        d.communes.push(c2);
+        const b2 = nouveauBail("e1", "c2", "b2");
+        [b2.surface, b2.fermagePrecedent, b2.revenuCadastralPrecedent] = ["5", "1000,005", "300"];
+        d.baux.push(b2);
+      }),
+    );
+    // Chaque fermage 2025 s'affiche 1 000,01 € : le total affiché doit être 2 000,02 €.
+    expect(r.totaux.fermagePrecedent).toBe(2000.02);
+    expect(r.parExploitant[0].totaux.fermagePrecedent).toBe(2000.02);
   });
 });
 

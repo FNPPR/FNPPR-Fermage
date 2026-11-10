@@ -10,29 +10,30 @@ import {
   type ResultatDossier,
 } from "../lib/calculDossier";
 import { arrondir } from "../lib/fermage";
-import { formaterEuros, formaterNombrePrecis } from "../lib/format";
+import { MOINS, formaterEuros, formaterNombre, formaterNombrePrecis } from "../lib/format";
 import type { EtatDossier } from "../lib/etatDossier";
 import {
   AideImpression,
-  AlerteErreurs,
   BlocAdresse,
-  DossierVide,
+  ResultatsIndisponibles,
   aujourdhuiIso,
   dateEnLettres,
   enumeration,
   nomCommuneDe,
   nomExploitantDe,
+  resultatsDisponibles,
+  type AllerAuDossier,
 } from "./communDossier";
 
 type Presentation = "exploitant" | "commune";
 
 const somme = (valeurs: number[]) => arrondir(valeurs.reduce((s, v) => s + v, 0), 2);
 
-/** Montant d'une colonne, ou vide pour une ligne qui ne concerne pas cette commune. */
-function Cellule({ valeur, signe = "" }: { valeur: number; signe?: "" | "−" }) {
+/** Montant d'une colonne ; les sommes à déduire sont précédées du signe moins : « −864,71 € ». */
+function Cellule({ valeur, aDeduire = false }: { valeur: number; aDeduire?: boolean }) {
   return (
     <td className="nombre">
-      {signe && valeur !== 0 ? `${signe} ` : ""}
+      {aDeduire && arrondir(valeur, 2) !== 0 ? MOINS : ""}
       {formaterEuros(valeur)}
     </td>
   );
@@ -61,17 +62,17 @@ function Lettre({
   const communes = baux.map(nomCommuneDe);
   const signataire = [dossier.bailleur.prenom.trim(), dossier.bailleur.nom.trim()].filter(Boolean).join(" ");
   const lieu = dossier.lieuCourrier.trim();
-  const coefficient = resultat.coefficientFermage;
+  const { indice, indicePrecedent } = resultat;
   const acomptes = baux.filter((b) => b.nombreAcomptes > 0);
   const colonnes = baux.length + (plusieurs ? 1 : 0);
 
-  const ligne = (libelle: string, valeurs: number[], total: number, signe: "" | "−" = "", classe?: string) => (
+  const ligne = (libelle: string, valeurs: number[], total: number, aDeduire = false, classe?: string) => (
     <tr className={classe}>
       <td>{libelle}</td>
       {valeurs.map((v, i) => (
-        <Cellule key={i} valeur={v} signe={signe} />
+        <Cellule key={i} valeur={v} aDeduire={aDeduire} />
       ))}
-      {plusieurs && <Cellule valeur={total} signe={signe} />}
+      {plusieurs && <Cellule valeur={total} aDeduire={aDeduire} />}
     </tr>
   );
 
@@ -87,7 +88,8 @@ function Lettre({
       </div>
 
       <p className="appel-lieu-date">
-        {lieu ? `${lieu}, ` : ""}le {dateEnLettres(dateCourrier)}
+        {lieu ? `${lieu}, le ` : "Le "}
+        {dateEnLettres(dateCourrier)}
       </p>
 
       <p className="appel-objet">
@@ -130,18 +132,27 @@ function Lettre({
             ))}
             {plusieurs && (
               <td className="nombre">
-                {formaterNombrePrecis(Number(baux.reduce((s, b) => s + b.surface, 0).toFixed(4)))} ha
+                {formaterNombrePrecis(baux.reduce((s, b) => s + b.surface, 0))} ha
               </td>
             )}
           </tr>
-          {ligne(`Fermage ${resultat.anneePrecedente}`, baux.map((b) => b.fermagePrecedent), somme(baux.map((b) => b.fermagePrecedent)), "", "ligne-info")}
+          {ligne(
+            `Fermage ${resultat.anneePrecedente}`,
+            baux.map((b) => b.fermagePrecedent),
+            // Somme des montants tels qu'affichés, au centime.
+            somme(baux.map((b) => arrondir(b.fermagePrecedent, 2))),
+            false,
+            "ligne-info",
+          )}
           {ligne(
             `Fermage ${resultat.annee}${
-              coefficient !== null ? ` (× ${formaterNombrePrecis(Number(coefficient.toFixed(4)))})` : ""
+              indice !== null && indicePrecedent !== null
+                ? ` (× ${formaterNombre(indice)} ÷ ${formaterNombre(indicePrecedent)})`
+                : ""
             }`,
             baux.map((b) => b.fermage),
             fermage,
-            "",
+            false,
             "appel-sous-total-ligne",
           )}
 
@@ -163,7 +174,7 @@ function Lettre({
               </tr>
             ))
           )}
-          {ligne("Total impôts et taxes", baux.map((b) => b.totalTaxes), totalTaxes, "", "appel-sous-total-ligne")}
+          {ligne("Total impôts et taxes", baux.map((b) => b.totalTaxes), totalTaxes, false, "appel-sous-total-ligne")}
 
           {deductions.length > 0 && (
             <>
@@ -174,18 +185,18 @@ function Lettre({
                 <tr key={id}>
                   <td>{LIBELLES_DEDUCTIONS[id]}</td>
                   {baux.map((b) => (
-                    <Cellule key={b.bail.id} valeur={b.deductions[id]} signe="−" />
+                    <Cellule key={b.bail.id} valeur={b.deductions[id]} aDeduire />
                   ))}
-                  {plusieurs && <Cellule valeur={somme(baux.map((b) => b.deductions[id]))} signe="−" />}
+                  {plusieurs && <Cellule valeur={somme(baux.map((b) => b.deductions[id]))} aDeduire />}
                 </tr>
               ))}
-              {ligne("Total à déduire", baux.map((b) => b.totalDeductions), totalDeductions, "−", "appel-sous-total-ligne")}
+              {ligne("Total à déduire", baux.map((b) => b.totalDeductions), totalDeductions, true, "appel-sous-total-ligne")}
             </>
           )}
         </tbody>
         <tfoot>
           <tr className="appel-total-ligne">
-            <td>{reste < 0 ? "Solde en votre faveur" : "Reste à devoir"}</td>
+            <td>Reste à devoir</td>
             {baux.map((b) => (
               <td key={b.bail.id} className="nombre">
                 {formaterEuros(b.resteDu)}
@@ -231,16 +242,17 @@ export function AppelsFermage({
 }: {
   etat: EtatDossier;
   resultat: ResultatDossier;
-  allerAuDossier: () => void;
+  allerAuDossier: AllerAuDossier;
 }) {
   const { dossier, modifier } = etat;
   const [presentation, setPresentation] = useState<Presentation>("exploitant");
   const [filtre, setFiltre] = useState("tous");
   const dateCourrier = dossier.dateCourrier.trim() || aujourdhuiIso();
 
-  const groupes = resultat.parExploitant.filter(
-    (g) => filtre === "tous" || g.exploitant.id === filtre,
-  );
+  const filtreValide = resultat.parExploitant.some((g) => g.exploitant.id === filtre) ? filtre : "tous";
+  const groupes = resultatsDisponibles(resultat)
+    ? resultat.parExploitant.filter((g) => filtreValide === "tous" || g.exploitant.id === filtreValide)
+    : [];
   const appels: ResultatBail[][] =
     presentation === "exploitant" ? groupes.map((g) => g.baux) : groupes.flatMap((g) => g.baux.map((b) => [b]));
   const bailleurRenseigne = nomAffiche(dossier.bailleur, "") !== "";
@@ -255,11 +267,10 @@ export function AppelsFermage({
           au preneur et déductions. Imprimez-les ou enregistrez-les en PDF ;
           ils sont conservés avec le dossier.
         </p>
-        {resultat.baux.length === 0 ? (
-          <DossierVide resultat={resultat} allerAuDossier={allerAuDossier} />
+        {!resultatsDisponibles(resultat) ? (
+          <ResultatsIndisponibles resultat={resultat} allerAuDossier={allerAuDossier} />
         ) : (
           <>
-            <AlerteErreurs resultat={resultat} allerAuDossier={allerAuDossier} />
             <fieldset className="choix-presentation">
               <legend>Présentation</legend>
               <label>
@@ -284,7 +295,7 @@ export function AppelsFermage({
             <div className="grille">
               <div className="champ">
                 <label htmlFor="ap-filtre">Exploitant</label>
-                <select id="ap-filtre" value={filtre} onChange={(e) => setFiltre(e.target.value)}>
+                <select id="ap-filtre" value={filtreValide} onChange={(e) => setFiltre(e.target.value)}>
                   <option value="tous">Tous les exploitants ({resultat.parExploitant.length})</option>
                   {resultat.parExploitant.map((g) => (
                     <option key={g.exploitant.id} value={g.exploitant.id}>
@@ -317,7 +328,7 @@ export function AppelsFermage({
               <p className="confirmation-bloc">
                 Le bailleur n'est pas renseigné : l'en-tête et la signature des
                 appels resteront vides.{" "}
-                <button type="button" className="btn-lien" onClick={allerAuDossier}>
+                <button type="button" className="btn-lien" onClick={() => allerAuDossier("bailleur-nom")}>
                   Compléter la fiche
                 </button>
               </p>

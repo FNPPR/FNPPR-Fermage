@@ -5,15 +5,18 @@ import { arrondir } from "../lib/fermage";
 import { formaterEuros, formaterNombrePrecis } from "../lib/format";
 import {
   AideImpression,
-  AlerteErreurs,
-  DossierVide,
   Montant,
+  ResultatsIndisponibles,
   dateEnLettres,
   nomCommuneDe,
   nomExploitantDe,
+  resultatsDisponibles,
+  type AllerAuDossier,
 } from "./communDossier";
 
-const ha = (s: number) => formaterNombrePrecis(Number(s.toFixed(4)));
+const ha = (s: number) => formaterNombrePrecis(s);
+/** Nombre d'exploitants différents parmi des terres louées. */
+const nombreExploitants = (baux: ResultatBail[]) => new Set(baux.map((b) => b.exploitant.id)).size;
 const parHa = (v: number | null) => (v === null ? "—" : formaterEuros(v));
 /** Dégrèvements, indemnités sécheresse et autres déductions (hors acomptes). */
 const autresDeductionsBail = (b: ResultatBail) => arrondir(b.totalDeductions - b.deductions.acompte, 2);
@@ -42,8 +45,9 @@ export function Recapitulatif({
   allerAuDossier,
 }: {
   resultat: ResultatDossier;
-  allerAuDossier: () => void;
+  allerAuDossier: AllerAuDossier;
 }) {
+  const disponibles = resultatsDisponibles(resultat);
   const proprietaire = nomAffiche(resultat.bailleur, "");
   const { annee, totaux } = resultat;
   return (
@@ -57,11 +61,10 @@ export function Recapitulatif({
           exploitant et par commune. Document destiné au propriétaire, utile
           notamment pour sa déclaration de revenus fonciers.
         </p>
-        {resultat.baux.length === 0 ? (
-          <DossierVide resultat={resultat} allerAuDossier={allerAuDossier} />
+        {!disponibles ? (
+          <ResultatsIndisponibles resultat={resultat} allerAuDossier={allerAuDossier} />
         ) : (
           <>
-            <AlerteErreurs resultat={resultat} allerAuDossier={allerAuDossier} />
             <div className="detail-actions">
               <button type="button" className="btn-imprimer" onClick={() => window.print()}>
                 Imprimer le récapitulatif
@@ -72,7 +75,7 @@ export function Recapitulatif({
         )}
       </div>
 
-      {resultat.baux.length > 0 && (
+      {disponibles && (
         <div className="recap-document">
           <div className="detail-entete">
             <div>
@@ -94,7 +97,7 @@ export function Recapitulatif({
                   <th className="nombre">Fermage à l'hectare</th>
                   <th className="nombre">Taxes imputées</th>
                   <th className="nombre">Acomptes versés</th>
-                  <th className="nombre">Dégrèvements et indemnités</th>
+                  <th className="nombre">Dégrèvements et autres déductions</th>
                   <th className="nombre">Reste à verser</th>
                 </tr>
               </thead>
@@ -136,6 +139,7 @@ export function Recapitulatif({
             </table>
           </div>
 
+          <div className="recap-bloc">
           <p className="recap-sous-titre">Par commune</p>
           <div className="tableau-scroll tableau-libre">
             <table className="tableau-dossier tableau-recap">
@@ -154,7 +158,7 @@ export function Recapitulatif({
                 {resultat.parCommune.map((g) => (
                   <tr key={g.commune.id}>
                     <td>{nomCommuneDe(g.baux[0])}</td>
-                    <td className="nombre">{g.baux.length}</td>
+                    <td className="nombre">{nombreExploitants(g.baux)}</td>
                     <td className="nombre">{ha(g.totaux.surface)}</td>
                     <td className="nombre">{formaterEuros(g.totaux.fermage)}</td>
                     <td className="nombre">{parHa(g.totaux.fermageParHa)}</td>
@@ -170,7 +174,7 @@ export function Recapitulatif({
               <tfoot>
                 <tr>
                   <td>Total</td>
-                  <td className="nombre">{resultat.baux.length}</td>
+                  <td className="nombre">{nombreExploitants(resultat.baux)}</td>
                   <td className="nombre">{ha(totaux.surface)}</td>
                   <td className="nombre">{formaterEuros(totaux.fermage)}</td>
                   <td className="nombre">{parHa(totaux.fermageParHa)}</td>
@@ -183,6 +187,7 @@ export function Recapitulatif({
                 </tr>
               </tfoot>
             </table>
+          </div>
           </div>
 
           <p className="detail-pied">

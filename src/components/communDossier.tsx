@@ -4,56 +4,131 @@
 
 import type { ReactNode } from "react";
 import { nomCommune, nomExploitant, type Coordonnees } from "../lib/dossier";
-import type { ResultatBail, ResultatDossier } from "../lib/calculDossier";
+import type { Probleme, ResultatBail, ResultatDossier } from "../lib/calculDossier";
 import { formaterEuros } from "../lib/format";
 
-/** Message affiché tant que la fiche ne permet aucun calcul. */
-export function DossierVide({
-  resultat,
-  allerAuDossier,
+/**
+ * Retour à la fiche Renseignements généraux, éventuellement sur une case
+ * précise (identifiant du champ, voir `idDuChamp`).
+ */
+export type AllerAuDossier = (idChamp?: string) => void;
+
+/** Identifiant, dans la fiche, de la case concernée par un problème ; null s'il n'y en a pas. */
+export function idDuChamp(p: Probleme): string | null {
+  if (!p.champ) return null;
+  if (p.bailId) return `bail-${p.bailId}-${p.champ}`;
+  if (p.communeId) return `commune-${p.communeId}-${p.champ}`;
+  if (p.champ === "revalorisationRevenuCadastral") return "d-revalo";
+  if (p.champ === "tauxDegrevement") return "d-degrevement";
+  return null;
+}
+
+/** Amène une case de la fiche à l'écran (en ouvrant les blocs repliés) et y place le curseur. */
+export function allerAuChamp(id: string): void {
+  const champ = document.getElementById(id);
+  if (!champ) return;
+  for (let n = champ.parentElement; n; n = n.parentElement) {
+    if (n instanceof HTMLDetailsElement) n.open = true;
+  }
+  champ.scrollIntoView({ block: "center" });
+  champ.focus({ preventScroll: true });
+}
+
+/**
+ * Vrai quand les résultats peuvent être affichés et imprimés : fiche sans
+ * aucune erreur et au moins une terre louée.
+ */
+export function resultatsDisponibles(r: ResultatDossier): boolean {
+  return r.sansErreur && r.baux.length > 0;
+}
+
+/** Liste de problèmes de la fiche, chacun avec un lien vers la case à corriger. */
+export function ListeProblemes({
+  problemes,
+  allerA,
+  max,
 }: {
-  resultat: ResultatDossier;
-  allerAuDossier: () => void;
+  problemes: Probleme[];
+  allerA: (idChamp: string) => void;
+  /** Nombre de problèmes affichés au plus (les suivants sont résumés). */
+  max?: number;
 }) {
-  const erreurs = resultat.problemes.filter((p) => p.gravite === "erreur").length;
+  const visibles = max === undefined ? problemes : problemes.slice(0, max);
+  const reste = problemes.length - visibles.length;
   return (
-    <div className="info">
-      {erreurs > 0 ? (
-        <>
-          <strong>La fiche contient {erreurs > 1 ? `${erreurs} erreurs` : "une erreur"}.</strong>{" "}
-          Corrigez-{erreurs > 1 ? "les" : "la"} dans l'onglet Renseignements généraux.
-        </>
-      ) : (
-        <>
-          <strong>Aucune terre louée n'est encore renseignée.</strong> Remplissez
-          d'abord la fiche Renseignements généraux : bailleur, communes,
-          exploitants et terres louées.
-        </>
-      )}{" "}
-      <button type="button" className="btn-lien" onClick={allerAuDossier}>
-        Ouvrir la fiche
-      </button>
-    </div>
+    <>
+      <ul className="liste-problemes">
+        {visibles.map((p, i) => {
+          const id = idDuChamp(p);
+          return (
+            <li key={i}>
+              <strong>{p.ou}</strong> : {p.message}
+              {id && (
+                <>
+                  {" "}
+                  <button type="button" className="btn-lien" onClick={() => allerA(id)}>
+                    Aller à la case
+                  </button>
+                </>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {reste > 0 && (
+        <p className="liste-problemes-suite">
+          … et {reste > 1 ? `${reste} autres points` : "un autre point"}, signalés dans la fiche.
+        </p>
+      )}
+    </>
   );
 }
 
-/** Rappel des erreurs de la fiche : certaines terres ne sont pas calculées. */
-export function AlerteErreurs({
+/**
+ * Affiché à la place des résultats tant qu'ils ne sont pas disponibles :
+ * fiche incomplète ou erronée (rien n'est alors calculé ni imprimable), ou
+ * aucune terre louée renseignée.
+ */
+export function ResultatsIndisponibles({
   resultat,
   allerAuDossier,
 }: {
   resultat: ResultatDossier;
-  allerAuDossier: () => void;
+  allerAuDossier: AllerAuDossier;
 }) {
   const erreurs = resultat.problemes.filter((p) => p.gravite === "erreur");
-  if (erreurs.length === 0) return null;
+  if (erreurs.length === 0) {
+    return (
+      <div className="info">
+        <strong>Aucune terre louée n'est encore renseignée.</strong> Remplissez
+        d'abord la fiche Renseignements généraux : bailleur, communes,
+        exploitants et terres louées.{" "}
+        <button type="button" className="btn-lien" onClick={() => allerAuDossier()}>
+          Ouvrir la fiche
+        </button>
+      </div>
+    );
+  }
+  const n = erreurs.length;
   return (
-    <div className="erreur no-print" role="alert">
-      <strong>Attention :</strong> la fiche contient{" "}
-      {erreurs.length > 1 ? `${erreurs.length} erreurs` : "une erreur"} (
-      {erreurs.map((e) => e.ou).filter((o, i, t) => t.indexOf(o) === i).join(" ; ")}) : les
-      terres concernées ne figurent pas ci-dessous.{" "}
-      <button type="button" className="btn-lien" onClick={allerAuDossier}>
+    <div className="erreur blocage" role="alert">
+      <p className="blocage-titre">
+        <strong>
+          Aucun résultat n'est affiché : la fiche comporte{" "}
+          {n > 1 ? `${n} points à corriger` : "un point à corriger"}.
+        </strong>
+      </p>
+      <p>
+        Tant qu'une case obligatoire est vide ou qu'une saisie est erronée,
+        aucun montant n'est calculé ni imprimable : aucun appel de fermage
+        incomplet ou faux ne peut ainsi être établi.
+      </p>
+      <ListeProblemes problemes={erreurs} allerA={allerAuDossier} max={8} />
+      <button
+        type="button"
+        className="btn-imprimer"
+        onClick={() => allerAuDossier(idDuChamp(erreurs[0]) ?? undefined)}
+      >
         Corriger la fiche
       </button>
     </div>

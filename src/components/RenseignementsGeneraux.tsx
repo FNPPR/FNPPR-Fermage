@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   exporterDossier,
   lireDossier,
@@ -20,6 +20,7 @@ import { dossierEntame, type EtatDossier } from "../lib/etatDossier";
 import { dossierExemple } from "../lib/exempleDossier";
 import { ANNEE_MAX, ANNEE_MIN, indicePourAnnee } from "../data/indices";
 import { formaterEuros, formaterNombre, formaterNombrePrecis } from "../lib/format";
+import { ListeProblemes, allerAuChamp } from "./communDossier";
 
 const CIVILITES = [
   "Madame",
@@ -50,6 +51,7 @@ function Champ({
   type = "text",
   liste,
   large = false,
+  probleme,
 }: {
   id: string;
   label: string;
@@ -61,7 +63,10 @@ function Champ({
   type?: "text" | "date" | "email" | "tel";
   liste?: string;
   large?: boolean;
+  /** Erreur portant sur cette saisie : la case est mise en évidence. */
+  probleme?: Probleme;
 }) {
+  const classe = probleme ? (probleme.manquant ? "saisie-manquante" : "saisie-invalide") : undefined;
   return (
     <div className="champ" style={large ? { gridColumn: "1 / -1" } : undefined}>
       <label htmlFor={id}>{label}</label>
@@ -74,10 +79,18 @@ function Champ({
         placeholder={placeholder}
         list={liste}
         autoComplete="off"
+        className={classe}
+        aria-invalid={probleme ? true : undefined}
+        title={probleme?.message}
         onChange={(e) => onChange(e.target.value)}
       />
     </div>
   );
+}
+
+/** L'erreur qui porte sur une saisie donnée, s'il y en a une. */
+function erreurSur(problemes: Probleme[], champ: string): Probleme | undefined {
+  return problemes.find((p) => p.gravite === "erreur" && p.champ === champ);
 }
 
 /** Bouton de suppression avec confirmation sur place (pas de fenêtre surgissante). */
@@ -106,11 +119,17 @@ function Problemes({ liste }: { liste: Probleme[] }) {
   if (liste.length === 0) return null;
   return (
     <ul className="problemes">
-      {liste.map((p, i) => (
-        <li key={i} className={p.gravite === "erreur" ? "probleme-erreur" : "probleme-avertissement"}>
-          {p.gravite === "erreur" ? "Erreur" : "À vérifier"} : {p.message}
-        </li>
-      ))}
+      {liste.map((p, i) =>
+        p.gravite === "erreur" ? (
+          <li key={i} className={p.manquant ? "probleme-manquant" : "probleme-erreur"}>
+            {p.manquant ? p.message : `Erreur : ${p.message}`}
+          </li>
+        ) : (
+          <li key={i} className="probleme-avertissement">
+            À vérifier : {p.message}
+          </li>
+        ),
+      )}
     </ul>
   );
 }
@@ -161,7 +180,7 @@ function CarteCommune({
   const p = `commune-${commune.id}`;
   const champ = (cle: keyof Commune, label: string, aide?: ReactNode, placeholder?: string) => (
     <Champ id={`${p}-${cle}`} label={label} aide={aide} placeholder={placeholder} nombre
-      valeur={commune[cle]} onChange={(v) => maj(cle, v)} />
+      valeur={commune[cle]} onChange={(v) => maj(cle, v)} probleme={erreurSur(problemes, cle)} />
   );
   return (
     <div className="fiche-carte">
@@ -180,7 +199,7 @@ function CarteCommune({
         {champ("tauxCommunal", "Commune", undefined, "ex. 42,89")}
         {champ("tauxIntercommunal", "Intercommunalité", undefined, "ex. 3,35")}
         {champ("tauxChambre", "Chambre d'agriculture", undefined, "ex. 15,24")}
-        {champ("tauxGemapi", "Taxe GEMAPI", undefined, "ex. 2,15")}
+        {champ("tauxGemapi", "Taxe GEMAPI", "0 s'il n'y en a pas", "ex. 2,15")}
       </div>
       <p className="fiche-sous-titre">Frais de rôle (%)</p>
       <div className="grille">
@@ -223,7 +242,7 @@ function CarteBail({
   const p = `bail-${bail.id}`;
   const champ = (cle: keyof Bail, label: string, aide?: ReactNode, placeholder?: string) => (
     <Champ id={`${p}-${cle}`} label={label} aide={aide} placeholder={placeholder} nombre
-      valeur={bail[cle]} onChange={(v) => maj(cle, v)} />
+      valeur={bail[cle]} onChange={(v) => maj(cle, v)} probleme={erreurSur(problemes, cle)} />
   );
   return (
     <div className="fiche-sous-carte">
@@ -456,13 +475,24 @@ export function RenseignementsGeneraux({
   etat,
   resultat,
   allerA,
+  champCible,
+  cibleAtteinte,
 }: {
   etat: EtatDossier;
   resultat: ResultatDossier;
   /** Navigation vers les onglets de résultats (absente tant qu'ils n'existent pas). */
   allerA?: (onglet: "taxe" | "appel" | "recap") => void;
+  /** Case à amener à l'écran à l'ouverture (venant d'un onglet de résultats). */
+  champCible?: string | null;
+  cibleAtteinte?: () => void;
 }) {
   const { dossier, modifier } = etat;
+
+  useEffect(() => {
+    if (!champCible) return;
+    allerAuChamp(champCible);
+    cibleAtteinte?.();
+  }, [champCible, cibleAtteinte]);
 
   const majDossier = <K extends keyof Dossier>(champ: K, v: Dossier[K]) =>
     modifier((d) => ({ ...d, [champ]: v }));
@@ -524,16 +554,18 @@ export function RenseignementsGeneraux({
           onChange={(v) => majDossier("echeance", v)} />
         <Champ id="d-revalo" label="Revalorisation des revenus cadastraux (%)" nombre
           aide="0,8 % pour 2026 (loi de finances)" valeur={dossier.revalorisationRevenuCadastral}
-          onChange={(v) => majDossier("revalorisationRevenuCadastral", v)} />
+          onChange={(v) => majDossier("revalorisationRevenuCadastral", v)}
+          probleme={erreurSur(generaux, "revalorisationRevenuCadastral")} />
         <Champ id="d-degrevement" label="Dégrèvement de la TFNB (%)" nombre
           aide="30 % depuis 2025" valeur={dossier.tauxDegrevement}
-          onChange={(v) => majDossier("tauxDegrevement", v)} />
+          onChange={(v) => majDossier("tauxDegrevement", v)}
+          probleme={erreurSur(generaux, "tauxDegrevement")} />
       </div>
       {indice !== undefined && indicePrec !== undefined && (
         <p className="aide-bloc">
           Indice national des fermages : {dossier.annee - 1} = {formaterNombre(indicePrec)}, {dossier.annee} ={" "}
-          {formaterNombre(indice)}, soit un coefficient de{" "}
-          {formaterNombrePrecis(Number((indice / indicePrec).toFixed(4)))}.
+          {formaterNombre(indice)}. Chaque fermage {dossier.annee - 1} est multiplié par{" "}
+          {formaterNombre(indice)} puis divisé par {formaterNombre(indicePrec)}, et arrondi au centime.
         </p>
       )}
       <Problemes liste={generaux} />
@@ -608,32 +640,41 @@ export function RenseignementsGeneraux({
       </button>
 
       <h3 className="fiche-titre">5. Contrôle</h3>
-      {resultat.baux.length === 0 && erreurs.length === 0 ? (
+      {erreurs.length > 0 ? (
+        <div className="erreur blocage">
+          <p className="blocage-titre">
+            <strong>
+              {erreurs.length === 1 ? "1 point à corriger" : `${erreurs.length} points à corriger`}
+            </strong>{" "}
+            : tant que la fiche est incomplète ou contient une erreur, aucun
+            résultat n'est calculé (réévaluation, taxes, appels de fermage,
+            récapitulatif).
+          </p>
+          <ListeProblemes problemes={erreurs} allerA={allerAuChamp} />
+        </div>
+      ) : resultat.baux.length === 0 ? (
         <p className="aide-bloc">
           Ajoutez au moins une commune et un exploitant avec ses terres
           louées, ou chargez l'exemple pour découvrir le calculateur.
         </p>
       ) : (
-        <div className={erreurs.length > 0 ? "erreur" : "info"}>
-          {erreurs.length > 0 ? (
-            <>
-              <strong>
-                {erreurs.length === 1 ? "1 erreur à corriger" : `${erreurs.length} erreurs à corriger`}
-              </strong>{" "}
-              : les terres concernées ne sont pas calculées tant que la saisie n'est pas corrigée.
-            </>
-          ) : (
-            <>
-              <strong>Saisie complète.</strong> {dossier.communes.length}{" "}
-              {dossier.communes.length > 1 ? "communes" : "commune"}, {resultat.parExploitant.length}{" "}
-              {resultat.parExploitant.length > 1 ? "exploitants" : "exploitant"},{" "}
-              {formaterNombrePrecis(Number(resultat.totaux.surface.toFixed(4)))} ha ; fermages {resultat.annee} :{" "}
-              {formaterEuros(resultat.totaux.fermage)}, taxes imputées : {formaterEuros(resultat.totaux.taxes)}.
-            </>
-          )}
-          {avertissements.length > 0 && (
-            <> {avertissements.length === 1 ? "1 point à vérifier" : `${avertissements.length} points à vérifier`} (signalés ci-dessus).</>
-          )}
+        <div className="info">
+          <strong>Saisie complète.</strong> {dossier.communes.length}{" "}
+          {dossier.communes.length > 1 ? "communes" : "commune"}, {resultat.parExploitant.length}{" "}
+          {resultat.parExploitant.length > 1 ? "exploitants" : "exploitant"},{" "}
+          {formaterNombrePrecis(resultat.totaux.surface)} ha ; fermages {resultat.annee} :{" "}
+          {formaterEuros(resultat.totaux.fermage)}, taxes imputées : {formaterEuros(resultat.totaux.taxes)}.
+        </div>
+      )}
+      {avertissements.length > 0 && (
+        <div className="avertissements-fiche">
+          <p>
+            <strong>
+              {avertissements.length === 1 ? "1 point à vérifier" : `${avertissements.length} points à vérifier`}
+            </strong>{" "}
+            (ils n'empêchent pas le calcul) :
+          </p>
+          <ListeProblemes problemes={avertissements} allerA={allerAuChamp} />
         </div>
       )}
       {allerA && resultat.baux.length > 0 && (
