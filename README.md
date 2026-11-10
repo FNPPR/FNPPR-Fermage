@@ -7,80 +7,78 @@ hébergé sur n'importe quel hébergement statique (GitHub Pages, Netlify…).
 
 ## Fonctionnalités
 
-1. **Réévaluation annuelle** — applique l'indice national des fermages :
-   `nouveau loyer = loyer initial × (indice année d'arrivée / indice année de départ)`,
-   avec le détail du calcul et un **historique année par année**.
-2. **Bornes préfectorales** — vérifie qu'un loyer respecte la fourchette
-   (minimum / maximum par hectare) fixée par l'arrêté préfectoral du
-   département, pour une surface donnée. Des **barèmes pré-remplis** par
-   département sont proposés (voir ci-dessous), avec saisie manuelle possible.
-3. **Tableau des indices** — l'indice national des fermages de 2009 à 2026.
-4. **Répartition des taxes foncières et assimilées** — répartit entre preneur et bailleur la TFNB (parts
-   communale et intercommunale, avec le dégrèvement 2025), les frais de
-   chambre d'agriculture, la taxe GEMAPI, la taxe de remembrement et les
-   taxes syndicales / de marais, exploitant par exploitant. Méthodes de
-   calcul de l'assiette, au choix ligne par ligne :
-   - **revenu cadastral de l'exploitant × taux voté** — méthode de référence
-     (« méthode rigoureuse » de la matrice FNPPR), proposée par défaut pour
-     la TFNB, la chambre d'agriculture et la GEMAPI. Indispensable dès qu'un
-     même avis d'imposition est partagé entre plusieurs exploitants, car une
-     répartition au seul prorata de surface peut s'écarter sensiblement des
-     revenus cadastraux réels de chacun. Le revenu cadastral (celui du
-     relevé de propriété, non minoré de 30 %) est saisi **une seule fois**
-     pour toutes les lignes ; un petit outil l'actualise d'une année sur
-     l'autre (coefficient de revalorisation des bases : 1,008 en 2026) ;
-   - **montant global de l'avis × % de surface** — approximation, fiable
-     seulement pour un exploitant unique ;
-   - **taux à l'hectare × surface louée** — pour les taxes assises
-     directement sur la surface (remembrement, taxes syndicales / de marais).
+Le calculateur travaille sur un **dossier de propriétaire** : un bailleur,
+ses communes (une par avis de taxes foncières) et ses exploitants, dont
+certains louent des terres dans plusieurs communes — sur le modèle de la
+matrice FNPPR « calcul par revenu cadastral » (novembre 2026). Les onglets,
+dans l'ordre de la note FNPPR d'octobre 2026 :
 
-   Garanties d'exactitude :
-   - TFNB : la taxe avant dégrèvement est calculée directement (revenu
-     cadastral × taux voté) ou, en méthode « montant global », par division
-     par (1 − dégrèvement) : le coefficient correcteur est **déduit du taux de
-     dégrèvement** (1 ÷ 0,70 ≈ 1,4286) et non plus saisi à part, ce qui
-     supprime l'écart de 0,1 % de la valeur arrondie 1,43 ;
-   - aucun arrondi intermédiaire ; chaque montant est arrondi au centime
-     selon l'arrondi commercial d'Excel (moitié éloignée de zéro, y compris
-     pour les réductions de fermage) ; les totaux sont la somme des lignes
-     arrondies ;
-   - chambre d'agriculture : la part de 50 % (art. 1604 du CGI, art. L514-1
-     du Code rural) est fixe et non modifiable ;
-   - un **détail des calculs** imprimable montre, pour chaque taxe, la
-     formule et les valeurs saisies ; refait à la calculatrice, chaque calcul
-     redonne exactement le montant retenu (vérifié par un test sur 2 000 cas) ;
-   - un **exemple de référence** (matrice FNPPR 2026, deux communes, trois
-     preneurs, données anonymisées) est rejoué à chaque modification par les
-     tests automatiques (`src/lib/taxeFonciereLignes.test.ts`).
+1. **Renseignements généraux** — la fiche du dossier : année de calcul
+   (indices, revalorisation des revenus cadastraux, dégrèvement de la TFNB),
+   bailleur, communes (taux votés, frais de rôle, remembrement et taxes
+   syndicales), exploitants et, pour chacun, les terres louées dans chaque
+   commune (surface, fermage et revenu cadastral de l'an dernier, taux du
+   bail taxes foncières et GEMAPI, acompte versé, dégrèvement, indemnité
+   sécheresse, autre taxe, autre déduction, acomptes de l'année suivante).
+   Autant de communes et d'exploitants que nécessaire. Les erreurs de saisie
+   sont signalées sur la commune ou les terres concernées. Le dossier est
+   conservé automatiquement dans le navigateur, s'enregistre dans un
+   fichier (`.json`) et se rouvre ; un exemple peut être chargé.
+2. **Réévaluation** — tous les fermages du dossier réévalués selon l'indice
+   national des fermages (`fermage = fermage de l'an dernier × indice de
+   l'année ÷ indice de l'an dernier`), puis le calculateur simple d'un
+   fermage, avec historique année par année.
+3. **Minimas et Maximas** — contrôle d'un loyer par rapport à la fourchette
+   de l'arrêté préfectoral du département (voir ci-dessous).
+4. **Répartition des taxes foncières et assimilées** — commune par commune,
+   les taxes imputées à chaque exploitant, calculées sur **son revenu
+   cadastral** (relevé de propriété, non minoré de 30 %, revalorisé de
+   l'année) : TFNB parts communale et intercommunale, chambre d'agriculture,
+   GEMAPI, remembrement, taxes syndicales et autres taxes. Un **détail des
+   calculs** imprimable donne pour chaque ligne la formule et les valeurs.
+5. **Appels de fermage** — un appel par exploitant regroupant toutes ses
+   communes (colonnes par commune et total), ou un appel par commune :
+   fermage réévalué, impôts et taxes, déductions, reste à devoir et acomptes
+   de l'année suivante. Impression d'un appel ou de tous (un par page A4).
+6. **Récapitulatif** — fermages et charges de toute la propriété, par
+   exploitant et par commune, pour le propriétaire (déclaration des revenus
+   fonciers) ; imprimé en A4 paysage.
+7. **Tableau des indices** — l'indice national des fermages de 2009 à 2026.
 
-   La taxe GEMAPI est calculée par l'administration sur une base déjà
-   réduite à 70 % (même dégrèvement que la TFNB) : son assiette est donc
-   dégrevée. En revanche, n'ayant pas le caractère d'une taxe foncière, sa
-   répartition suit la formule « simple » des autres taxes annexes (méthode
-   « simple » : ni soustraction du taux de dégrèvement, ni coefficient
-   correcteur), et non la formule de reconstruction de la TFNB. Imposition
-   récente : l'application rappelle de vérifier que le bail prévoit bien son
-   remboursement.
-5. **Appel de fermage** — compose le décompte final à adresser au preneur.
-   Entièrement relié aux deux modules précédents (état partagé via
-   `App.tsx`, sans aucune ressaisie) :
-   - le loyer, l'année de départ et l'année de calcul sont **communs** avec
-     l'onglet Réévaluation ;
-   - les lignes de taxes dont le montant imputé au preneur est non nul sont
-     **reprises automatiquement** depuis l'onglet Répartition des taxes
-     foncières (avec un lien direct pour les vérifier/modifier).
+### Règles de calcul (`src/lib/calculDossier.ts`)
 
-   S'y ajoutent l'acompte déjà versé à déduire et des lignes de charges
-   complémentaires libres (pour tout ce qui n'est pas couvert par les 6
-   lignes standard). Le résultat est une vraie mise en page de courrier
-   (expéditeur et destinataire en en-tête, lieu et date, objet, formule de
-   politesse et signature), prêt à imprimer ou enregistrer en PDF
-   (`window.print()`, avec une feuille de style dédiée qui n'imprime que le
-   courrier — sans page blanche superflue). L'application rappelle à
-   l'écran comment décocher, dans la boîte d'impression du navigateur,
-   l'option « En-têtes et pieds de page » qui ajouterait sinon l'URL du
-   site en bas de chaque page (réglage du navigateur, non désactivable
-   depuis la page elle-même).
+- TFNB, parts communale et intercommunale : revenu cadastral × taux voté ×
+  (taux du bail − dégrèvement), majoré des frais de rôle seulement si le
+  résultat est positif (négatif = réduction de fermage en faveur du preneur).
+- Chambre d'agriculture : revenu cadastral × taux voté × 50 % × (1 + frais de
+  rôle) ; part de 50 % fixe (art. 1604 du CGI, art. L514-1 du Code rural).
+- GEMAPI : revenu cadastral × (1 − dégrèvement) × taux voté × taux du bail
+  GEMAPI × (1 + frais de rôle) : base réduite comme la TFNB, mais sans
+  soustraction du dégrèvement à la répartition (ce n'est pas une taxe
+  foncière). Imposition récente : vérifier que le bail prévoit son
+  remboursement.
+- Remembrement, taxes syndicales : montant à l'hectare × surface × part du
+  preneur.
+- Reste dû = fermage + taxes − (acompte + dégrèvement + indemnité sécheresse
+  + autre déduction) ; acompte de l'année suivante = fermage ÷ (nombre
+  d'acomptes + 1).
+
+### Garanties d'exactitude
+
+- Aucun arrondi intermédiaire ; chaque montant retenu est arrondi au centime
+  (arrondi commercial d'Excel, y compris pour les montants négatifs) et
+  chaque total est la somme des montants arrondis : un appel de fermage est
+  toujours égal à la somme de ses lignes.
+- Deux **exemples de référence** sont rejoués à chaque modification par les
+  tests automatiques (`src/lib/calculDossier.test.ts`) : les matrices FNPPR
+  d'octobre et de novembre 2026 (2 communes × 3 exploitants, noms fictifs),
+  retrouvées au centime — à l'exception, pour celle de novembre, de ses deux
+  erreurs documentées dans `src/lib/exempleDossier.ts`.
+- Le détail imprimé de chaque calcul, refait à la calculatrice, redonne
+  exactement le montant retenu (vérifié par un test sur 2 000 cas).
+
+Non traité à ce jour : la variation de surface en cours d'année (règle de
+prorata à préciser).
 
 ## L'indice national des fermages
 
@@ -137,19 +135,21 @@ deployment → Source : GitHub Actions**. Le site sera alors disponible sur
 `https://<utilisateur>.github.io/FNPPR-Fermage/`. La configuration Vite utilise
 un `base` relatif, compatible avec un hébergement en sous-répertoire.
 
-### Ancienne version conservée
+### Versions conservées
 
-La version en ligne jusqu'au 27 octobre 2026 (avant la fiabilisation du
-calcul des taxes foncières) est conservée par précaution :
+- **Version du 27 octobre 2026** (un exploitant à la fois) : en ligne à
+  l'adresse `…/FNPPR-Fermage/version-27-octobre/` (bandeau qui la signale,
+  version compilée rangée dans `public/version-27-octobre/`) et sur la
+  branche `claude/version-publiee-2026-10-27` (commit `e234cbe`). Pour
+  retirer la copie en ligne, supprimer ce dossier.
+- **Version de septembre 2026** : en ligne à l'adresse
+  `…/FNPPR-Fermage/ancienne-version/` (bandeau qui la signale, version
+  compilée rangée dans `public/ancienne-version/`, que Vite recopie telle
+  quelle) et sur la branche `claude/ancienne-version-2026-10-27` (commit
+  `fed3ad6`). Pour retirer la copie en ligne, supprimer ce dossier.
 
-- **en ligne**, à l'adresse `…/FNPPR-Fermage/ancienne-version/`, avec un
-  bandeau qui la signale et renvoie à la version actuelle. Il s'agit de sa
-  version compilée, rangée dans `public/ancienne-version/` (Vite recopie ce
-  dossier tel quel dans le site publié). Pour la retirer, supprimer ce dossier ;
-- **dans Git**, sur la branche `claude/ancienne-version-2026-10-27` (commit
-  `fed3ad6`). Pour revenir entièrement à cette version, annuler la fusion de
-  la demande n° 23 (bouton « Revert » sur GitHub) : le site est republié
-  automatiquement.
+Pour revenir à une version précédente, annuler (« Revert ») sur GitHub la
+fusion qui l'a remplacée : le site est republié automatiquement.
 
 ## Développement
 
@@ -168,14 +168,16 @@ npm run preview    # prévisualiser le build de production
 ```
 src/
   data/indices.ts           Valeurs officielles de l'indice national des fermages
-  lib/fermage.ts            Fonctions de calcul pures (réévaluation, bornes)
-  lib/taxeFonciere.ts       Répartition des taxes foncières et assimilées (calcul pur)
-  lib/taxeFonciereLignes.ts Modèle des 6 lignes de taxes + calcul agrégé (réutilisé par l'Appel de fermage)
-  lib/etatFermageBase.ts    État partagé (loyer, années) entre Réévaluation et Appel de fermage
-  lib/etatTaxeFonciere.ts   État partagé des lignes de taxes, entre les deux mêmes onglets
-  lib/appelFermage.ts       Composition du décompte d'appel de fermage
-  lib/format.ts             Formatage € / % / nombres (fr-FR)
-  components/               Composants de l'interface (un par module de calcul)
+  data/baremes.ts           Départements et barèmes préfectoraux vérifiés
+  lib/dossier.ts            Dossier d'un propriétaire : types, création, lecture d'un fichier
+  lib/calculDossier.ts      Calcul du dossier : fermages, taxes, déductions, totaux
+  lib/exempleDossier.ts     Exemple de référence (matrice FNPPR de novembre 2026, noms fictifs)
+  lib/etatDossier.ts        Dossier en cours, partagé par les onglets et conservé dans le navigateur
+  lib/taxeFonciere.ts       Formules de répartition d'une taxe et détail chiffré du calcul
+  lib/fermage.ts            Réévaluation, historique, bornes préfectorales, arrondi
+  lib/etatFermageBase.ts    État du calculateur simple de réévaluation
+  lib/format.ts             Lecture des saisies et formatage € / % / nombres (fr-FR)
+  components/               Un composant par onglet (+ communDossier.tsx, éléments partagés)
   App.tsx                   Mise en page et navigation par onglets
   main.tsx                  Point d'entrée React
 ```

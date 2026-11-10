@@ -1,9 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
+  formaterEuros,
   formaterEurosPrecis,
   formaterNombrePrecis,
   formaterTaux,
   parseNombre,
+  saisieVide,
 } from "./format";
 
 const espaces = (s: string) => s.replace(/[  ]/g, " ");
@@ -28,6 +30,23 @@ describe("parseNombre", () => {
   it("une saisie incompréhensible donne NaN (erreur affichée, jamais une autre valeur)", () => {
     expect(parseNombre("mille")).toBeNaN();
     expect(parseNombre("1,234,5")).toBeNaN();
+    expect(parseNombre("1.234,56")).toBeNaN();
+    expect(parseNombre("1e3")).toBeNaN();
+    expect(parseNombre("0x10")).toBeNaN();
+    expect(parseNombre("Infinity")).toBeNaN();
+    expect(parseNombre("12-")).toBeNaN();
+  });
+
+  it("accepte le signe moins typographique recopié depuis le site", () => {
+    expect(parseNombre("\u22125,5")).toBe(-5.5);
+    expect(parseNombre("-5,5")).toBe(-5.5);
+  });
+
+  it("saisieVide : blancs, « € » ou « % » seuls", () => {
+    expect(saisieVide("")).toBe(true);
+    expect(saisieVide(" % ")).toBe(true);
+    expect(saisieVide("€")).toBe(true);
+    expect(saisieVide("0")).toBe(false);
   });
 });
 
@@ -47,5 +66,27 @@ describe("formatage sans arrondi (détail des calculs)", () => {
   it("formaterNombrePrecis", () => {
     expect(formaterNombrePrecis(14.2423)).toBe("14,2423");
     expect(formaterNombrePrecis(8)).toBe("8");
+    // Surfaces : toutes les décimales saisies, sans arrondi à 4 décimales.
+    expect(formaterNombrePrecis(7.77777)).toBe("7,77777");
+    expect(formaterNombrePrecis(15.23 + 7.16)).toBe("22,39");
+    expect(formaterNombrePrecis(1.123456789)).toBe("1,123456789");
+  });
+});
+
+describe("formaterEuros", () => {
+  it("arrondit au centime comme les calculs", () => {
+    expect(espaces(formaterEuros(1234.5))).toBe("1 234,50 €");
+    expect(espaces(formaterEuros(1500.555))).toBe("1 500,56 €");
+    expect(espaces(formaterEuros(1.005))).toBe("1,01 €");
+  });
+
+  it("écrit les montants négatifs avec le signe moins « − »", () => {
+    expect(espaces(formaterEuros(-41.59))).toBe("\u221241,59 €");
+    expect(espaces(formaterEuros(-0.005))).toBe("\u22120,01 €");
+  });
+
+  it("n'affiche jamais « −0,00 € »", () => {
+    expect(espaces(formaterEuros(-0))).toBe("0,00 €");
+    expect(espaces(formaterEuros(-0.004))).toBe("0,00 €");
   });
 });

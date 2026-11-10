@@ -1067,3 +1067,578 @@ tbody tr.surligne td {
     font-size: 1.6rem;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Version complète : fiche « Renseignements généraux »               */
+/* ------------------------------------------------------------------ */
+
+/* Cases d'une même ligne alignées, qu'elles aient ou non une aide. */
+.fiche .grille {
+  align-items: end;
+}
+
+.fiche-titre {
+  margin: 1.75rem 0 0.4rem;
+  font-size: 1.08rem;
+  color: var(--bleu-fonce);
+  padding-bottom: 0.3rem;
+  border-bottom: 2px solid var(--bleu-clair);
+}
+
+.fiche-sous-titre {
+  margin: 0.9rem 0 0.45rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--bleu);
+}
+
+.aide-bloc {
+  font-size: 0.86rem;
+  color: var(--gris-doux);
+  margin: 0.2rem 0 0.75rem;
+}
+
+.fiche-carte {
+  border: 1px solid var(--gris-bord);
+  border-radius: var(--rayon);
+  padding: 1rem 1.1rem 1.1rem;
+  margin-bottom: 0.9rem;
+  background: var(--blanc);
+}
+
+.fiche-sous-carte {
+  border: 1px solid #cdddee;
+  border-left: 4px solid var(--bleu-accent);
+  border-radius: 8px;
+  padding: 0.85rem 1rem 1rem;
+  margin-top: 1rem;
+  background: #f7fafd;
+}
+
+.fiche-carte-titre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+  font-weight: 700;
+  color: var(--bleu-fonce);
+  margin-bottom: 0.75rem;
+}
+
+.fiche-details {
+  margin-top: 0.9rem;
+}
+
+.fiche-details summary {
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--bleu);
+  margin-bottom: 0.6rem;
+}
+
+.btn-lien {
+  border: none;
+  background: none;
+  padding: 0.2rem 0;
+  color: var(--bleu);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.btn-danger {
+  border: 1px solid var(--rouge);
+  background: #fdecea;
+  color: var(--rouge);
+  border-radius: 7px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.confirmation {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.confirmation-bloc {
+  margin: 0.6rem 0 0;
+  padding: 0.6rem 0.8rem;
+  background: #fff6e6;
+  border-left: 4px solid var(--orange-warning);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.dossier-barre {
+  padding: 0.85rem 1rem;
+  background: var(--gris-fond);
+  border-radius: var(--rayon);
+  margin-bottom: 0.5rem;
+}
+
+.dossier-boutons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.dossier-boutons .btn-ajouter {
+  margin-bottom: 0;
+}
+
+.dossier-barre .aide-bloc {
+  margin: 0.6rem 0 0;
+}
+
+.message-ok {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  color: #1d6b3a;
+}
+
+.problemes {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  font-size: 0.86rem;
+}
+
+.problemes li {
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  margin-top: 0.3rem;
+}
+
+.probleme-erreur {
+  background: #fdecea;
+  color: var(--rouge);
+}
+
+.probleme-avertissement {
+  background: #fff6e6;
+  color: #7a4b00;
+}
+
+.ajout-bail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gris-texte);
+}
+
+.ajout-bail select {
+  font-size: 0.95rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--gris-bord);
+  border-radius: 7px;
+  background: var(--blanc);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ajout-bail .btn-ajouter {
+  margin-bottom: 0;
+}
+
+.dossier-suite {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 0.9rem;
+  margin-top: 1rem;
+}
+
+.dossier-suite .btn-imprimer {
+  display: inline-block;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .fiche-carte,
+  .fiche-sous-carte {
+    padding: 0.8rem;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Version complète : tableaux de résultats, appels, récapitulatif    */
+/* ------------------------------------------------------------------ */
+
+.tableau-dossier {
+  width: 100%;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tableau-dossier th,
+.tableau-dossier td {
+  white-space: nowrap;
+}
+
+.tableau-dossier td:first-child,
+.tableau-dossier th:first-child {
+  white-space: normal;
+}
+
+.tableau-dossier .nombre,
+.appel-tableau .nombre {
+  text-align: right;
+}
+
+.tableau-dossier tfoot td {
+  font-weight: 700;
+  color: var(--bleu-fonce);
+  border-top: 2px solid var(--bleu-fonce);
+  background: var(--bleu-clair);
+}
+
+.tableau-dossier .ligne-info td,
+.appel-tableau .ligne-info td {
+  color: var(--gris-doux);
+  font-size: 0.86em;
+}
+
+.tableau-dossier .ligne-sous-total td {
+  font-weight: 700;
+  background: var(--gris-fond);
+}
+
+.montant-negatif {
+  color: var(--orange-warning);
+}
+
+.detail-commune + .detail-commune {
+  margin-top: 0.8rem;
+}
+
+.detail-titre-commune {
+  margin: 0.9rem 0 0.2rem;
+  font-weight: 800;
+  color: var(--bleu);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: 0.92rem;
+}
+
+.choix-presentation {
+  border: 1px solid var(--gris-bord);
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem 0.75rem;
+  margin: 0 0 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+  font-size: 0.92rem;
+}
+
+.choix-presentation legend {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--gris-texte);
+  padding: 0 0.3rem;
+}
+
+.choix-presentation label {
+  cursor: pointer;
+}
+
+/* Appel de fermage : tableau du décompte */
+.appel-lettre + .appel-lettre {
+  margin-top: 1.5rem;
+}
+
+.appel-tableau {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+  margin: 0.5rem 0 0;
+}
+
+.appel-tableau th,
+.appel-tableau td {
+  padding: 0.22rem 0.45rem;
+  border: none;
+  background: none;
+}
+
+.appel-tableau thead th {
+  color: var(--bleu-fonce);
+  font-weight: 700;
+  border-bottom: 1px solid var(--gris-bord);
+  white-space: nowrap;
+}
+
+.appel-tableau td:first-child {
+  font-weight: 400;
+  color: inherit;
+}
+
+.appel-tableau tbody tr:hover {
+  background: none;
+}
+
+.appel-tableau .nombre {
+  white-space: nowrap;
+}
+
+.appel-tableau .appel-section td {
+  padding-top: 0.75rem;
+  font-weight: 700;
+  color: var(--bleu-fonce);
+  text-decoration: underline;
+}
+
+.appel-tableau .appel-sous-total-ligne td {
+  font-weight: 700;
+  border-top: 1px dashed var(--gris-bord);
+}
+
+.appel-tableau .appel-total-ligne td {
+  font-weight: 800;
+  font-size: 1.04rem;
+  color: var(--bleu-fonce);
+  border-top: 2px solid var(--bleu-fonce);
+  padding-top: 0.45rem;
+}
+
+.appel-nota {
+  margin-top: 1.2rem !important;
+  font-size: 0.86rem;
+  color: var(--gris-doux);
+}
+
+/* Récapitulatif */
+.recap-document {
+  margin-top: 1rem;
+}
+
+.recap-sous-titre {
+  margin: 1rem 0 0.4rem;
+  font-weight: 700;
+  color: var(--bleu);
+  break-after: avoid;
+}
+
+.tableau-recap td:first-child {
+  min-width: 8.5rem;
+}
+
+.appel-tableau-conteneur {
+  overflow-x: auto;
+}
+
+@media (max-width: 600px) {
+  .appel-lettre {
+    padding: 1rem;
+  }
+  .appel-tableau {
+    font-size: 0.82rem;
+  }
+}
+
+@media print {
+  .appel-lettre {
+    margin: 0;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    break-after: page;
+    font-size: 10pt;
+    line-height: 1.4;
+  }
+  .appel-lettre p {
+    margin: 0 0 0.55rem;
+  }
+  .appel-lettre .appel-entete {
+    margin-bottom: 1rem;
+  }
+  .appel-lettre .appel-objet {
+    margin-bottom: 0.7rem !important;
+  }
+  .appel-lettre .appel-signature {
+    margin-top: 0.9rem !important;
+  }
+  .appel-tableau {
+    font-size: 9.5pt;
+  }
+  .appel-tableau th,
+  .appel-tableau td {
+    padding: 0.1rem 0.4rem;
+  }
+  .appel-tableau .appel-section td {
+    padding-top: 0.45rem;
+  }
+  .appel-tableau-conteneur {
+    overflow: visible;
+  }
+  .appel-lettre:last-of-type {
+    break-after: auto;
+  }
+  .appel-lettre + .appel-lettre {
+    margin-top: 0;
+  }
+  .appel-tableau tr,
+  .tableau-dossier tr {
+    break-inside: avoid;
+  }
+  .tableau-scroll {
+    overflow: visible;
+    max-height: none;
+    border: none;
+  }
+  .recap-document {
+    margin: 0;
+    font-size: 9.5pt;
+  }
+  .tableau-dossier {
+    font-size: 8.5pt;
+  }
+  .tableau-dossier tfoot td,
+  .tableau-dossier .ligne-sous-total td {
+    background: none;
+  }
+}
+
+/* Tableaux du dossier : défilement horizontal seulement, jamais coupés en hauteur. */
+.tableau-libre {
+  max-height: none;
+}
+
+/* Impression au format A4 (le récapitulatif passe en paysage sur son onglet). */
+@page {
+  size: A4;
+  margin: 14mm 15mm;
+}
+
+/* ------------------------------------------------------------------ */
+/* Contrôle de la fiche : cases à compléter ou erronées                */
+/* ------------------------------------------------------------------ */
+
+/* Case obligatoire laissée vide. */
+.champ input.saisie-manquante {
+  border-color: var(--orange-warning);
+  background: #fff8ec;
+}
+
+/* Saisie illisible ou hors des limites. */
+.champ input.saisie-invalide {
+  border-color: var(--rouge);
+  background: #fdecea;
+}
+
+.probleme-manquant {
+  background: #fff6e6;
+  color: #7a4b00;
+  border-left: 3px solid var(--orange-warning);
+}
+
+/* Résultats bloqués tant que la fiche n'est pas complète et juste. */
+.blocage p {
+  margin: 0 0 0.5rem;
+}
+
+.blocage .blocage-titre {
+  font-size: 0.98rem;
+}
+
+.blocage .btn-imprimer {
+  margin-top: 0.6rem;
+}
+
+.liste-problemes {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.liste-problemes li {
+  margin-top: 0.25rem;
+}
+
+.liste-problemes .btn-lien {
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.blocage .liste-problemes .btn-lien {
+  color: var(--rouge);
+}
+
+.liste-problemes-suite {
+  margin: 0.4rem 0 0 !important;
+  font-style: italic;
+}
+
+.avertissements-fiche {
+  margin-top: 0.8rem;
+  padding: 0.75rem 1rem;
+  background: #fff6e6;
+  color: #7a4b00;
+  border-left: 4px solid var(--orange-warning);
+  border-radius: 6px;
+  font-size: 0.92rem;
+}
+
+.avertissements-fiche p {
+  margin: 0;
+}
+
+.avertissements-fiche .btn-lien {
+  color: #7a4b00;
+}
+
+/* Récapitulatif : les intitulés de colonnes passent à la ligne pour que le
+   tableau tienne dans la largeur de l'écran. */
+.tableau-recap {
+  font-size: 0.86rem;
+}
+
+.tableau-recap thead th {
+  white-space: normal;
+  vertical-align: bottom;
+  line-height: 1.25;
+}
+
+.tableau-recap th,
+.tableau-recap td {
+  padding: 0.45rem 0.5rem;
+}
+
+@media print {
+  /* Les totaux ne se répètent pas en bas de chaque page : imprimés une seule
+     fois, à la fin du tableau (sinon un total général apparaîtrait sous une
+     partie seulement des lignes). */
+  .tableau-dossier tfoot,
+  .appel-tableau tfoot {
+    display: table-row-group;
+  }
+  /* Le tableau par commune, court, ne se coupe pas entre deux pages. */
+  .recap-bloc {
+    break-inside: avoid;
+  }
+}
+
+/* Écrans moyens (tablette, petit portable) : récapitulatif plus compact pour
+   tenir sans défilement horizontal. */
+@media screen and (max-width: 1200px) {
+  .tableau-recap {
+    font-size: 0.75rem;
+  }
+  .tableau-recap th,
+  .tableau-recap td {
+    padding: 0.4rem 0.22rem;
+  }
+  .tableau-recap td:first-child {
+    min-width: 5.5rem;
+  }
+}
