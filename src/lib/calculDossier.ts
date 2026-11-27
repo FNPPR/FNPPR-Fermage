@@ -9,7 +9,10 @@
  *  - fermage = fermage de l'année précédente × indice de l'année ÷ indice de
  *    l'année précédente ;
  *  - revenu cadastral = revenu cadastral de l'année précédente (relevé de
- *    propriété) × (1 + revalorisation des bases), sans arrondi ;
+ *    propriété) × (1 + revalorisation des bases), arrondi à l'euro le plus
+ *    proche, la fraction égale à 0,50 € comptant pour 1 € : c'est l'arrondi
+ *    des bases d'imposition par l'administration fiscale (CGI, art. 1657, 1 ;
+ *    BOI-IF-TFNB-20, § 30). La matrice Excel, elle, n'arrondit pas ;
  *  - TFNB, parts communale et intercommunale : revenu cadastral × taux voté ×
  *    (taux du bail − dégrèvement), majoré des frais de rôle seulement si le
  *    résultat est positif ;
@@ -116,7 +119,12 @@ export interface ResultatBail {
   /** Fermage de l'année, arrondi au centime. */
   fermage: number;
   revenuCadastralPrecedent: number;
-  /** Revenu cadastral actualisé, non arrondi (comme la matrice). */
+  /** Revenu cadastral actualisé avant arrondi : revenu cadastral N-1 × (1 + revalorisation). */
+  revenuCadastralExact: number;
+  /**
+   * Revenu cadastral actualisé retenu pour les taxes : arrondi à l'euro le
+   * plus proche (0,50 € compté pour 1 €), comme les bases d'imposition.
+   */
   revenuCadastral: number;
   /** Les sept lignes de taxes, dans l'ordre `ORDRE_TAXES` (montants nuls compris). */
   taxes: LigneTaxe[];
@@ -189,6 +197,8 @@ export interface ResultatDossier {
   /** Dégrèvement de la TFNB (fraction) et revalorisation des revenus cadastraux (fraction). */
   tauxDegrevement: number;
   revalorisation: number;
+  /** Vrai si le revenu cadastral actualisé est arrondi à l'euro (règle de l'administration). */
+  arrondiRevenuCadastral: boolean;
   /**
    * Vrai quand la fiche ne contient aucune erreur. Dans le cas contraire,
    * aucun résultat n'est fourni (baux, groupes et totaux vides) : un document
@@ -458,6 +468,7 @@ function calculerBail(
   annee: number,
   revalorisation: number,
   params: ParametresDegrevement,
+  arrondiRevenuCadastral: boolean,
 ): ResultatBail {
   const {
     surface,
@@ -474,7 +485,11 @@ function calculerBail(
   } = s;
 
   const revalo = revaloriserFermage(fermagePrecedent, annee - 1, annee);
-  const revenuCadastral = rcPrecedent * (1 + revalorisation);
+  const revenuCadastralExact = rcPrecedent * (1 + revalorisation);
+  // Arrondi à l'euro le plus proche, 0,50 compté pour 1 (CGI, art. 1657, 1).
+  const revenuCadastral = arrondiRevenuCadastral
+    ? arrondir(revenuCadastralExact, 0)
+    : revenuCadastralExact;
   const rc = (taux: number, degrevee: boolean): Assiette => ({
     mode: "revenuCadastral",
     revenuCadastral,
@@ -534,6 +549,7 @@ function calculerBail(
     fermagePrecedent,
     fermage,
     revenuCadastralPrecedent: rcPrecedent,
+    revenuCadastralExact,
     revenuCadastral,
     taxes,
     totalTaxes,
@@ -595,7 +611,19 @@ export function deductionsUtiles(baux: ResultatBail[]): IdDeduction[] {
 // Calcul du dossier
 // ---------------------------------------------------------------------------
 
-export function calculerDossier(dossier: Dossier): ResultatDossier {
+export interface OptionsCalcul {
+  /**
+   * Arrondi du revenu cadastral actualisé à l'euro le plus proche, comme
+   * l'administration fiscale (par défaut). Désactivé seulement pour comparer
+   * le calcul aux matrices Excel, qui n'arrondissent pas.
+   */
+  arrondiRevenuCadastral?: boolean;
+}
+
+export function calculerDossier(
+  dossier: Dossier,
+  { arrondiRevenuCadastral = true }: OptionsCalcul = {},
+): ResultatDossier {
   const problemes: Probleme[] = [];
   const annee = dossier.annee;
   const anneePrecedente = annee - 1;
@@ -630,6 +658,7 @@ export function calculerDossier(dossier: Dossier): ResultatDossier {
       indice !== null && indicePrecedent ? indice / indicePrecedent : null,
     tauxDegrevement,
     revalorisation,
+    arrondiRevenuCadastral,
     sansErreur: false,
     bauxSaisis: 0,
     baux: [],
@@ -684,6 +713,7 @@ export function calculerDossier(dossier: Dossier): ResultatDossier {
             annee,
             revalorisation,
             params,
+            arrondiRevenuCadastral,
           ),
         );
       }

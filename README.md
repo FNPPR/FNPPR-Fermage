@@ -22,8 +22,12 @@ dans l'ordre de la note FNPPR d'octobre 2026 :
    sécheresse, autre taxe, autre déduction, acomptes de l'année suivante).
    Autant de communes et d'exploitants que nécessaire. Les erreurs de saisie
    sont signalées sur la commune ou les terres concernées. Le dossier est
-   conservé automatiquement dans le navigateur, s'enregistre dans un
-   fichier (`.json`) et se rouvre ; un exemple peut être chargé.
+   conservé automatiquement dans le navigateur. « Enregistrer le dossier »
+   crée un **PDF** lisible et imprimable (fiche et résultats) qui contient
+   aussi les données du dossier, en pièce jointe : « Ouvrir un dossier… » le
+   rouvre (les anciens fichiers `.json` se rouvrent aussi). Un exemple peut
+   être chargé. Voir `src/lib/pdfDossier.ts` ; la bibliothèque `pdf-lib`
+   n'est chargée qu'à l'enregistrement ou à l'ouverture d'un PDF.
 2. **Réévaluation** — tous les fermages du dossier réévalués selon l'indice
    national des fermages (`fermage = fermage de l'an dernier × indice de
    l'année ÷ indice de l'an dernier`), puis le calculateur simple d'un
@@ -33,7 +37,7 @@ dans l'ordre de la note FNPPR d'octobre 2026 :
 4. **Répartition des taxes foncières et assimilées** — commune par commune,
    les taxes imputées à chaque exploitant, calculées sur **son revenu
    cadastral** (relevé de propriété, non minoré de 30 %, revalorisé de
-   l'année) : TFNB parts communale et intercommunale, chambre d'agriculture,
+   l'année et arrondi à l'euro le plus proche) : TFNB parts communale et intercommunale, chambre d'agriculture,
    GEMAPI, remembrement, taxes syndicales et autres taxes. Un **détail des
    calculs** imprimable donne pour chaque ligne la formule et les valeurs.
 5. **Appels de fermage** — un appel par exploitant regroupant toutes ses
@@ -47,6 +51,12 @@ dans l'ordre de la note FNPPR d'octobre 2026 :
 
 ### Règles de calcul (`src/lib/calculDossier.ts`)
 
+- Revenu cadastral de l'année = revenu cadastral de l'an dernier × (1 +
+  revalorisation), **arrondi à l'euro le plus proche**, la fraction égale à
+  0,50 € comptant pour 1 €, comme l'administration fiscale arrondit les
+  bases d'imposition (CGI, art. 1657, 1 ; BOI-IF-TFNB-20, § 30). Les
+  matrices Excel n'arrondissent pas : les tests les comparent en désactivant
+  cet arrondi.
 - TFNB, parts communale et intercommunale : revenu cadastral × taux voté ×
   (taux du bail − dégrèvement), majoré des frais de rôle seulement si le
   résultat est positif (négatif = réduction de fermage en faveur du preneur).

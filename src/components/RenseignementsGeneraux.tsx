@@ -18,6 +18,7 @@ import {
 import type { Probleme, ResultatDossier } from "../lib/calculDossier";
 import { dossierEntame, type EtatDossier } from "../lib/etatDossier";
 import { dossierExemple } from "../lib/exempleDossier";
+import { creerPdfDossier, estUnPdf, lireDonneesPdf } from "../lib/pdfDossier";
 import { ANNEE_MAX, ANNEE_MIN, indicePourAnnee } from "../data/indices";
 import { formaterEuros, formaterNombre, formaterNombrePrecis } from "../lib/format";
 import { ListeProblemes, allerAuChamp } from "./communDossier";
@@ -360,11 +361,27 @@ function CarteExploitant({
 // Barre du dossier : nouveau, ouvrir, enregistrer, exemple
 // ---------------------------------------------------------------------------
 
-function BarreDossier({ etat }: { etat: EtatDossier }) {
+/** Propose un fichier au téléchargement (dossier Téléchargements du navigateur). */
+function telecharger(contenu: BlobPart, type: string, nom: string): void {
+  const url = URL.createObjectURL(new Blob([contenu], { type }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nom;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // Laisse au navigateur le temps de lire le fichier avant de le libérer.
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+function BarreDossier({ etat, resultat }: { etat: EtatDossier; resultat: ResultatDossier }) {
   const { dossier, remplacer } = etat;
   const entree = useRef<HTMLInputElement>(null);
   const [attente, setAttente] = useState<null | "nouveau" | "ouvrir" | "exemple">(null);
   const [message, setMessage] = useState<{ erreur: boolean; texte: string } | null>(null);
+  const [enCours, setEnCours] = useState(false);
+  // Secours si le PDF ne peut pas être créé : enregistrement des seules données.
+  const [secours, setSecours] = useState(false);
 
   function executer(action: "nouveau" | "ouvrir" | "exemple") {
     setAttente(null);
@@ -378,36 +395,61 @@ function BarreDossier({ etat }: { etat: EtatDossier }) {
     else executer(action);
   }
 
-  function enregistrer() {
-    const blob = new Blob([exporterDossier(dossier)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = nomFichierDossier(dossier);
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    setMessage({ erreur: false, texte: `Dossier enregistré sous « ${a.download} » (dossier Téléchargements).` });
+  async function enregistrer() {
+    setAttente(null);
+    setMessage(null);
+    setEnCours(true);
+    try {
+      const pdf = await creerPdfDossier(dossier, resultat);
+      const nom = nomFichierDossier(dossier, "pdf");
+      telecharger(new Uint8Array(pdf), "application/pdf", nom);
+      setSecours(false);
+      setMessage({
+        erreur: false,
+        texte: `Dossier enregistré en PDF sous « ${nom} » (dossier Téléchargements). Ce PDF se lit et s'imprime comme tout document ; pour reprendre le dossier, rouvrez-le avec « Ouvrir un dossier… ».`,
+      });
+    } catch (e) {
+      setSecours(true);
+      setMessage({
+        erreur: true,
+        texte: `Le PDF n'a pas pu être créé${e instanceof Error && e.message ? ` (${e.message})` : ""}. Vous pouvez enregistrer les seules données du dossier ci-dessous, puis réessayer plus tard.`,
+      });
+    } finally {
+      setEnCours(false);
+    }
+  }
+
+  function enregistrerDonnees() {
+    const nom = nomFichierDossier(dossier, "json");
+    telecharger(exporterDossier(dossier), "application/json", nom);
+    setSecours(false);
+    setMessage({ erreur: false, texte: `Données du dossier enregistrées sous « ${nom} » (dossier Téléchargements).` });
   }
 
   async function ouvrirFichier(fichier: File | undefined) {
     if (!fichier) return;
+    setMessage(null);
+    setEnCours(true);
     try {
-      const d = lireDossier(JSON.parse(await fichier.text()));
-      remplacer(d);
+      const octets = new Uint8Array(await fichier.arrayBuffer());
+      let donnees: unknown;
+      if (estUnPdf(octets)) {
+        donnees = await lireDonneesPdf(octets);
+      } else {
+        try {
+          donnees = JSON.parse(new TextDecoder("utf-8").decode(octets));
+        } catch {
+          throw new Error(
+            `« ${fichier.name} » n'est pas un dossier du calculateur : choisissez un PDF créé par « Enregistrer le dossier ».`,
+          );
+        }
+      }
+      remplacer(lireDossier(donnees));
       setMessage({ erreur: false, texte: `Dossier « ${fichier.name} » ouvert.` });
     } catch (e) {
-      setMessage({
-        erreur: true,
-        texte:
-          e instanceof SyntaxError
-            ? `« ${fichier.name} » n'est pas un dossier du calculateur (fichier illisible).`
-            : e instanceof Error
-              ? e.message
-              : "Fichier illisible.",
-      });
+      setMessage({ erreur: true, texte: e instanceof Error ? e.message : "Fichier illisible." });
     } finally {
+      setEnCours(false);
       if (entree.current) entree.current.value = "";
     }
   }
@@ -424,11 +466,11 @@ function BarreDossier({ etat }: { etat: EtatDossier }) {
         <button type="button" className="btn-ajouter" onClick={() => demander("nouveau")}>
           Nouveau dossier
         </button>
-        <button type="button" className="btn-ajouter" onClick={() => demander("ouvrir")}>
+        <button type="button" className="btn-ajouter" onClick={() => demander("ouvrir")} disabled={enCours}>
           Ouvrir un dossier…
         </button>
-        <button type="button" className="btn-ajouter" onClick={enregistrer}>
-          Enregistrer le dossier
+        <button type="button" className="btn-ajouter" onClick={enregistrer} disabled={enCours}>
+          {enCours ? "Patientez…" : "Enregistrer le dossier (PDF)"}
         </button>
         <button type="button" className="btn-lien" onClick={() => demander("exemple")}>
           Charger l'exemple
@@ -436,7 +478,7 @@ function BarreDossier({ etat }: { etat: EtatDossier }) {
         <input
           ref={entree}
           type="file"
-          accept=".json,application/json"
+          accept=".pdf,application/pdf,.json,application/json"
           hidden
           onChange={(e) => ouvrirFichier(e.target.files?.[0])}
         />
@@ -455,13 +497,23 @@ function BarreDossier({ etat }: { etat: EtatDossier }) {
       {message && (
         <p className={message.erreur ? "erreur" : "message-ok"} role="status">
           {message.texte}
+          {secours && (
+            <>
+              {" "}
+              <button type="button" className="btn-lien" onClick={enregistrerDonnees}>
+                Enregistrer les données seules
+              </button>
+            </>
+          )}
         </p>
       )}
       <p className="aide-bloc">
         Le dossier est conservé automatiquement sur cet ordinateur, dans ce
         navigateur. Pour le garder durablement, le transmettre ou le rouvrir
-        ailleurs, utilisez « Enregistrer le dossier » : un fichier est créé
-        dans vos téléchargements. Aucune donnée n'est envoyée sur Internet.
+        ailleurs, utilisez « Enregistrer le dossier » : un fichier PDF est créé
+        dans vos téléchargements. Il se lit et s'imprime comme tout document,
+        et contient les données du dossier : pour le reprendre, choisissez-le
+        avec « Ouvrir un dossier… ». Aucune donnée n'est envoyée sur Internet.
       </p>
     </div>
   );
@@ -535,7 +587,7 @@ export function RenseignementsGeneraux({
         ))}
       </datalist>
 
-      <BarreDossier etat={etat} />
+      <BarreDossier etat={etat} resultat={resultat} />
 
       <h3 className="fiche-titre">1. Année de calcul</h3>
       <div className="grille">

@@ -15,7 +15,9 @@ import { nouveauBail, nouvelExploitant, nouvelleCommune, nouveauDossier } from "
  * attendus recalculés indépendamment, en arithmétique décimale exacte, selon
  * la méthode rigoureuse de la matrice ; chaque ligne est arrondie au centime.
  * Ordre des lignes : part communale, part intercommunale, chambre
- * d'agriculture, GEMAPI.
+ * d'agriculture, GEMAPI. La matrice n'arrondit pas le revenu cadastral
+ * actualisé : ces tests désactivent donc l'arrondi à l'euro (voir plus bas
+ * les montants avec l'arrondi de l'administration, appliqué par le site).
  */
 const ATTENDUS: Record<
   string,
@@ -37,8 +39,8 @@ function bailDe(r: ReturnType<typeof calculerDossier>, id: string): ResultatBail
   return b;
 }
 
-describe("exemple de référence — matrice FNPPR 2026 (novembre)", () => {
-  const r = calculerDossier(dossierExemple());
+describe("exemple de référence — matrice FNPPR 2026 (novembre), formules de la matrice", () => {
+  const r = calculerDossier(dossierExemple(), { arrondiRevenuCadastral: false });
 
   it("calcule les six baux sans erreur ni avertissement", () => {
     expect(r.problemes).toEqual([]);
@@ -129,7 +131,7 @@ describe("cohérence interne (chaque appel est la somme de ses lignes)", () => {
 
   it("totalTaxe additionne une même taxe sur plusieurs communes", () => {
     const a = r.parExploitant[0].baux;
-    expect(totalTaxe(a, "chambre")).toBe(arrondi(59.64 + 26.47));
+    expect(totalTaxe(a, "chambre")).toBe(arrondi(59.66 + 26.5));
   });
 
   it("taxesUtiles et deductionsUtiles ne retiennent que les lignes non nulles", () => {
@@ -466,7 +468,7 @@ describe("exemple de référence — matrice FNPPR d'octobre 2026", () => {
     b.surface = "10";
     return b;
   });
-  const r = calculerDossier(d);
+  const r = calculerDossier(d, { arrondiRevenuCadastral: false }); // formules de la matrice
   const attendus: Record<string, { lignes: number[]; total: number; fermage: number }> = {
     "c1-p1": { lignes: [-41.59, -3.08, 76.8, 3.25], total: 35.38, fermage: 1785.35 },
     "c1-p2": { lignes: [0, 0, 133.99, 0], total: 133.99, fermage: 3432.54 },
@@ -483,4 +485,70 @@ describe("exemple de référence — matrice FNPPR d'octobre 2026", () => {
       expect(b.fermage).toBe(a.fermage);
     });
   }
+});
+
+/**
+ * Revenu cadastral actualisé arrondi à l'euro le plus proche, la fraction
+ * égale à 0,50 € comptant pour 1 € (CGI, art. 1657, 1 ; BOI-IF-TFNB-20,
+ * § 30), comme l'administration fiscale pour les bases d'imposition. Montants
+ * attendus recalculés indépendamment en arithmétique décimale exacte.
+ */
+const ATTENDUS_ARRONDIS: Record<string, { rc: number; lignes: number[]; taxes: number; reste: number }> = {
+  "bail-aa": { rc: 725, lignes: [32.34, 2.53, 59.66, 2.27], taxes: 96.8, reste: 955.44 },
+  "bail-ba": { rc: 328, lignes: [0, 0, 26.5, 1.41], taxes: 27.91, reste: 509.05 },
+  "bail-ab": { rc: 1653, lignes: [-70.9, -5.54, 136.04, 1.03], taxes: 60.63, reste: 3288.17 },
+  "bail-bb": { rc: 608, lignes: [-25.4, -1.98, 49.12, 0], taxes: 21.74, reste: 1371.9 },
+  "bail-ac": { rc: 1861, lignes: [-79.82, -6.23, 153.15, 8.74], taxes: 75.84, reste: 3693.51 },
+  "bail-bc": { rc: 1269, lignes: [54.61, 4.25, 102.52, 10.89], taxes: 172.27, reste: 2613.09 },
+};
+
+describe("revenu cadastral actualisé arrondi à l'euro, comme l'administration fiscale", () => {
+  const r = calculerDossier(dossierExemple());
+
+  it("est appliqué par défaut", () => {
+    expect(r.arrondiRevenuCadastral).toBe(true);
+    expect(r.problemes).toEqual([]);
+  });
+
+  for (const [id, a] of Object.entries(ATTENDUS_ARRONDIS)) {
+    it(`${id} : revenu cadastral arrondi, taxes ligne par ligne et reste dû`, () => {
+      const b = bailDe(r, id);
+      expect(b.revenuCadastral).toBe(a.rc);
+      expect(b.taxes.slice(0, 4).map((t) => t.impute)).toEqual(a.lignes);
+      expect(b.totalTaxes).toBe(a.taxes);
+      expect(b.resteDu).toBe(a.reste);
+    });
+  }
+
+  it("à l'euro le plus proche, et non à l'euro supérieur : 1 640 × 1,008 = 1 653,12 → 1 653", () => {
+    const b = bailDe(r, "bail-ab");
+    expect(b.revenuCadastralExact).toBeCloseTo(1653.12, 9);
+    expect(b.revenuCadastral).toBe(1653);
+    expect(bailDe(r, "bail-aa").revenuCadastral).toBe(725); // 724,752 → 725
+  });
+
+  it("la fraction égale à 0,50 € compte pour 1 € ; un résultat entier reste inchangé", () => {
+    const rc = (saisie: string, revalo = "0") =>
+      calculerDossier(
+        dossierSimple((d) => {
+          d.revalorisationRevenuCadastral = revalo;
+          d.baux[0].revenuCadastralPrecedent = saisie;
+        }),
+      ).baux[0].revenuCadastral;
+    expect(rc("100,5")).toBe(101);
+    expect(rc("100,49")).toBe(100);
+    expect(rc("1000", "0,8")).toBe(1008); // 1 000 × 1,008 = 1 008 exactement, jamais 1 009
+    expect(rc("500", "0,8")).toBe(504);
+  });
+
+  it("les taxes partent du revenu cadastral arrondi", () => {
+    const b = bailDe(r, "bail-aa");
+    expect(b.taxes[2].detail?.etapes[0].calcul).toMatch(/^725,00/);
+  });
+
+  it("totaux par exploitant, par commune et de la propriété", () => {
+    expect(r.parExploitant.map((g) => [g.totaux.fermage, g.totaux.taxes, g.totaux.resteDu])).toEqual([[2541.49, 124.71, 1464.49], [4826.2, 82.37, 4660.07], [6782.49, 248.11, 6306.6]]);
+    expect(r.parCommune.map((g) => [g.totaux.fermage, g.totaux.taxes, g.totaux.resteDu])).toEqual([[9101.56, 233.27, 7937.12], [5048.62, 221.92, 4494.04]]);
+    expect([r.totaux.fermage, r.totaux.taxes, r.totaux.resteDu]).toEqual([14150.18, 455.19, 12431.16]);
+  });
 });
