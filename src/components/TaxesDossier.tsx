@@ -134,7 +134,15 @@ function TableauCommune({ groupe }: { groupe: GroupeCommune }) {
   );
 }
 
-function DetailBail({ b, revalorisation }: { b: ResultatBail; revalorisation: number }) {
+function DetailBail({
+  b,
+  revalorisation,
+  arrondi,
+}: {
+  b: ResultatBail;
+  revalorisation: number;
+  arrondi: boolean;
+}) {
   const lignes = b.taxes.filter((t) => t.impute !== 0 || (t.montantTotal ?? 0) !== 0);
   // Remarques (montant négatif, frais de rôle non appliqués…) : une seule fois
   // par terres louées, en précisant la taxe concernée (les parts communale et
@@ -159,8 +167,12 @@ function DetailBail({ b, revalorisation }: { b: ResultatBail; revalorisation: nu
       </p>
       <p className="detail-remarque" style={{ fontStyle: "normal" }}>
         Revenu cadastral actualisé = {formaterEurosPrecis(b.revenuCadastralPrecedent)} × (1 +{" "}
-        {formaterTaux(revalorisation)}) ={" "}
-        {formaterEurosPrecis(b.revenuCadastral)}
+        {formaterTaux(revalorisation)}) = {formaterEurosPrecis(b.revenuCadastralExact)}
+        {arrondi && b.revenuCadastral !== Number(b.revenuCadastralExact.toPrecision(12)) && (
+          <>
+            , arrondi à l'euro le plus proche : <strong>{formaterEuros(b.revenuCadastral)}</strong>
+          </>
+        )}
       </p>
       {lignes.length === 0 && <p className="detail-remarque">Aucune taxe pour ces terres.</p>}
       {lignes.map((t) =>
@@ -223,13 +235,21 @@ function DetailCalculs({ resultat, afficheALEcran }: { resultat: ResultatDossier
       <p className="detail-parametres">
         Dégrèvement de la TFNB : {formaterTaux(resultat.tauxDegrevement)} (loi n° 2025-127 du
         14/02/2025). Revenus cadastraux de l'an dernier (relevés de propriété) revalorisés de{" "}
-        {formaterTaux(resultat.revalorisation)}.
+        {formaterTaux(resultat.revalorisation)}
+        {resultat.arrondiRevenuCadastral &&
+          ", puis arrondis à l'euro le plus proche comme les bases d'imposition (0,50 € compte pour 1 € ; CGI, art. 1657)"}
+        .
       </p>
       {resultat.parCommune.map((g) => (
         <div key={g.commune.id} className="detail-commune">
           <p className="detail-titre-commune">{nomCommuneDe(g.baux[0])}</p>
           {g.baux.map((b) => (
-            <DetailBail key={b.bail.id} b={b} revalorisation={resultat.revalorisation} />
+            <DetailBail
+              key={b.bail.id}
+              b={b}
+              revalorisation={resultat.revalorisation}
+              arrondi={resultat.arrondiRevenuCadastral}
+            />
           ))}
         </div>
       ))}
@@ -278,8 +298,9 @@ export function TaxesDossier({
           <>
             <p className="aide-bloc">
               Année {resultat.annee} · dégrèvement {formaterTaux(resultat.tauxDegrevement)} · revenus
-              cadastraux revalorisés de {formaterTaux(resultat.revalorisation)} · montant négatif = en
-              faveur du preneur (réduction de fermage).
+              cadastraux revalorisés de {formaterTaux(resultat.revalorisation)} puis arrondis à l'euro le
+              plus proche, comme le fait l'administration fiscale · montant négatif = en faveur du
+              preneur (réduction de fermage).
             </p>
             {resultat.parCommune.map((g) => (
               <TableauCommune key={g.commune.id} groupe={g} />
@@ -329,7 +350,11 @@ export function TaxesDossier({
             <strong>revenu cadastral de l'an dernier</strong> propre aux
             parcelles qui lui sont louées (relevé de propriété, et non l'avis
             d'impôt, déjà minoré de 30 %), revalorisé du coefficient de
-            l'année (0,8 % en 2026).
+            l'année (0,8 % en 2026) puis <strong>arrondi à l'euro le plus
+            proche</strong>, comme l'administration fiscale arrondit les bases
+            d'imposition : la fraction égale à 0,50 € compte pour 1 € (article
+            1657 du Code général des impôts). Exemple : 1 640 € × 1,008 =
+            1 653,12 €, arrondi à 1 653 €.
           </p>
           <p className="formule">
             Taxe foncière (parts communale et intercommunale) :<br />

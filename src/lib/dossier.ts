@@ -325,13 +325,13 @@ export function exporterDossier(dossier: Dossier): string {
   return JSON.stringify(dossier, null, 2);
 }
 
-/** Nom de fichier proposé à l'enregistrement : « dossier-fermages-joly-2026.json ». */
-export function nomFichierDossier(dossier: Dossier): string {
+/** Nom de fichier proposé à l'enregistrement : « dossier-fermages-joly-2026.pdf ». */
+export function nomFichierDossier(dossier: Dossier, extension: "pdf" | "json" = "pdf"): string {
   const nom = nomAffiche(dossier.bailleur, "proprietaire")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-  return `dossier-fermages-${nom || "proprietaire"}-${dossier.annee}.json`;
+  return `dossier-fermages-${nom || "proprietaire"}-${dossier.annee}.${extension}`;
 }

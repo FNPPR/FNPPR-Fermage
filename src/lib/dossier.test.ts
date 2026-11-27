@@ -65,7 +65,8 @@ describe("enregistrement et lecture d'un dossier", () => {
   });
 
   it("nom de fichier lisible, sans accents ni espaces", () => {
-    expect(nomFichierDossier(dossierExemple())).toBe("dossier-fermages-proprietaire-exemple-2026.json");
-    expect(nomFichierDossier(nouveauDossier(2026))).toBe("dossier-fermages-proprietaire-2026.json");
+    expect(nomFichierDossier(dossierExemple())).toBe("dossier-fermages-proprietaire-exemple-2026.pdf");
+    expect(nomFichierDossier(nouveauDossier(2026))).toBe("dossier-fermages-proprietaire-2026.pdf");
+    expect(nomFichierDossier(nouveauDossier(2026), "json")).toBe("dossier-fermages-proprietaire-2026.json");
   });
 });
